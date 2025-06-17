@@ -1,0 +1,5 @@
+{
+    "Payments (EPH)" : "Primary",
+    "Core Banking (Temenos)": "Primary",
+    "Cards (Vision Plus+)": "Secondary"
+}
