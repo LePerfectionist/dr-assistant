@@ -67,10 +67,15 @@ class ChatResponse(BaseModel):
 async def upload_runbooks(files: List[UploadFile] = File(...)):
     session_id = str(uuid4())
     embedding_path = "embeddings/runbooks_index"
-    if not os.path.exists(embedding_path):
-        await create_embedding(files, embedding_path)
-    else:
-        print("Embeddings already created")
+    # if not os.path.exists(embedding_path):
+    #     await create_embedding(files, embedding_path)
+    # else:
+    #     print("Embeddings already created")
+    if os.path.exists("embeddings/runbooks_index"):
+        shutil.rmtree("embeddings/runbooks_index")
+
+    await create_embedding(files, embedding_path)
+
 
 
     return {"session_id": session_id}
@@ -147,6 +152,7 @@ chat_memory_store = {}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
+    print("Chat endpoint hit")
     try:
         # Per-session memory
         if request.session_id not in chat_memory_store:

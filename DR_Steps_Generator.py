@@ -53,6 +53,11 @@ with st.form("failover_form"):
         system_choices[system] = st.radio(system, options, index=0)
     submitted = st.form_submit_button("Generate Drill Steps")
 
+#Hold in session
+if "dr_steps" in st.session_state:
+    st.markdown(st.session_state.dr_steps, unsafe_allow_html=True)
+    st.download_button("Download Steps", data=st.session_state.dr_steps, file_name="dr_steps.txt")
+
 # --- Call FastAPI to Generate DR Steps ---
 if submitted:
     payload = {
@@ -66,8 +71,10 @@ if submitted:
         )
     if res.status_code == 200:
         response = res.json()["dr_steps"]
+        st.session_state["dr_steps"] = response
         st.markdown("### Generated DR Drill Steps")
         st.markdown(response, unsafe_allow_html=True)
         st.download_button("Download Steps", data=response, file_name="dr_steps.txt")
+        
     else:
         st.error("Failed to generate DR Steps.")

@@ -3,7 +3,6 @@ import requests
 
 logo_url = "https://digitalprocurement.dib.ae/images/logo.png"
 st.image(logo_url, width=200)
-st.title("Generative AI-Powered Disaster Recovery Assistant")
 st.markdown("---")
 st.header("💬 Chat with Your Runbooks")
 
