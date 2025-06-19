@@ -1,0 +1,122 @@
+.app-container {
+  font-family: "Segoe UI", sans-serif;
+  padding: 2rem;
+  background: #f2f6fa;
+  min-height: 100vh;
+  position: relative;
+}
+.header {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.logo {
+  height: 50px; /* or adjust as needed */
+  margin-right: 16px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+
+/* Header with logo and title */
+/* .header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  width: 170px;
+  height: 170px;
+  object-fit: contain;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #003366;
+} */
+
+.upload-section,
+.system-section,
+.result-section {
+  background: white;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.file-input {
+  margin-bottom: 1rem;
+}
+
+.upload-button,
+.generate-button {
+  padding: 0.5rem 1rem;
+  background-color: #0052cc;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.upload-button[disabled],
+.generate-button[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.upload-status {
+  margin-top: 0.5rem;
+  color: green;
+  font-weight: 500;
+}
+
+.system-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.result-section {
+  white-space: pre-wrap;
+}
+
+/* Optional markdown enhancements */
+.result-section h1,
+.result-section h2,
+.result-section h3 {
+  color: #003366;
+  margin-top: 1rem;
+}
+
+.result-section code {
+  background-color: #eef;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.result-section pre {
+  background-color: #f4f4f4;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
