@@ -3,17 +3,29 @@
   padding: 2rem;
   background: #f2f6fa;
   min-height: 100vh;
-  position: relative;
+  position: relative; /* This is important for the ChatBubble's positioning */
 }
+
+/* --- NEW STYLES FOR THE CENTERED CONTAINER --- */
+.main-content {
+  max-width: 700px; /* Adjust this value to your liking */
+  margin: 0 auto; /* This horizontally centers the container */
+  width: 100%; /* Ensures it's responsive on smaller screens */
+}
+/* --- END OF NEW STYLES --- */
+
 .header {
   display: flex;
   align-items: center;
   padding: 20px;
   background-color: #f5f5f5;
+  /* Making header corners rounded to match other sections */
+  border-radius: 10px;
+  margin-bottom: 1rem;
 }
 
 .logo {
-  height: 50px; /* or adjust as needed */
+  height: 50px;
   margin-right: 16px;
 }
 
@@ -22,28 +34,6 @@
   font-weight: bold;
   color: #333;
 }
-
-
-/* Header with logo and title */
-/* .header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.logo {
-  width: 170px;
-  height: 170px;
-  object-fit: contain;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #003366;
-} */
 
 .upload-section,
 .system-section,
@@ -95,28 +85,24 @@
   margin-bottom: 0.5rem;
 }
 
-.result-section {
-  white-space: pre-wrap;
+.result-section * {
+  margin-top: 0;
+  margin-bottom: 0.25rem; /* Apply a tiny margin to everything */
 }
 
-/* Optional markdown enhancements */
+/* Then, add back a little more space just for headers to maintain hierarchy */
 .result-section h1,
 .result-section h2,
 .result-section h3 {
   color: #003366;
-  margin-top: 1rem;
+  margin-top: 1rem; /* Give headers breathing room */
+  margin-bottom: 0.25rem;
 }
 
-.result-section code {
-  background-color: #eef;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
+.result-section ul,
+.result-section ol {
+   padding-left: 20px; /* Ensure lists are still indented */
 }
 
-.result-section pre {
-  background-color: #f4f4f4;
-  padding: 1rem;
-  border-radius: 8px;
-  overflow-x: auto;
-}
+/* ------------------------------------------------------ */
+
