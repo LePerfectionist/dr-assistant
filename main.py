@@ -65,19 +65,21 @@ class ChatResponse(BaseModel):
 
 @app.post("/upload_runbooks")
 async def upload_runbooks(files: List[UploadFile] = File(...)):
+    print("Entering upload runbooks")
     session_id = str(uuid4())
     embedding_path = "embeddings/runbooks_index"
-    # if not os.path.exists(embedding_path):
-    #     await create_embedding(files, embedding_path)
-    # else:
-    #     print("Embeddings already created")
-    if os.path.exists("embeddings/runbooks_index"):
-        shutil.rmtree("embeddings/runbooks_index")
+    try:
+        if not os.path.exists(embedding_path):
+            await create_embedding(files, embedding_path)
+        else:
+            print("Embeddings already created")
+        # if os.path.exists("embeddings/runbooks_index"):
+        #     shutil.rmtree("embeddings/runbooks_index")
 
-    await create_embedding(files, embedding_path)
-
-
-
+        # await create_embedding(files, embedding_path)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
     return {"session_id": session_id}
 
 
@@ -86,6 +88,7 @@ dr_memory: Dict[str, str] = {}
 
 @app.post("/generate-dr-steps", response_model=DRStepsResponse)
 async def generate_dr_plan(request: DRStepsRequest):
+    print("Entering dr step generation")
     try:
         session_folder = f"runbooks"   #Ideally to be replaced by session upload dir
         context_text = extract_text_from_folder(session_folder)
@@ -112,37 +115,8 @@ async def generate_dr_plan(request: DRStepsRequest):
 
         return DRStepsResponse(dr_steps=dr_steps_text, session_id=request.session_id)
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# @app.post("/chat", response_model=ChatResponse)
-# async def chat(
-#     request: ChatRequest,
-# ):
-#     try:
-#         query_engine = get_query_engine()
-#         if query_engine:
-#             print("Query engine loaded")
-#         memory = Memory.from_defaults(session_id=request.session_id, token_limit=4000)
-#         if memory:
-#             print("Memory loaded")
-#         if (
-#             request.include_dr_context 
-#             and request.session_id in dr_memory 
-#             and request.session_id not in dr_context_injected
-#         ):
-#             memory.put_messages([ChatMessage(role="system", content=f"DR Steps to be used as context:\n\n```{dr_memory[request.session_id]}```")])
-#             dr_context_injected.add(request.session_id)
-#             print("DR context added to memory")
-#             print("DR Steps generated", dr_memory[request.session_id][:15])
-#         memory.put_messages([ChatMessage(role="user", content=request.question)])
-#         response = query_engine.query(request.question).response
-#         print("Response", response)
-#         memory.put_messages([ChatMessage(role="assistant", content=str(response))])
-        
-#         return ChatResponse(answer=response)
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 
 dr_context_injected = set()
@@ -173,6 +147,7 @@ async def chat(request: ChatRequest):
         return ChatResponse(answer=response)
 
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -32,7 +32,12 @@ const ChatBubble = ({ sessionId }) => {
       setChatHistory((prev) => [...prev, assistantMessage]);
     } catch (err) {
       console.error("Chat error:", err.response?.data || err.message);
-      alert("Error sending message.");
+      // Add a message to the chat history to inform the user
+      const errorMessage = {
+        role: "assistant",
+        content: "Sorry, I couldn't get a response. Please try again.",
+      };
+      setChatHistory((prev) => [...prev, errorMessage]);
     }
   };
 
@@ -46,7 +51,11 @@ const ChatBubble = ({ sessionId }) => {
     <div className="chatbot-container">
       {isOpen && (
         <div className="chatbox">
-          <div className="chat-header">Ask your Query</div>
+          {/* --- MODIFIED: Header now contains a close button --- */}
+          <div className="chat-header">
+            <span>Ask your Query</span>
+            <button className="chat-close-btn" onClick={toggleChat}>✕</button>
+          </div>
           <div className="chat-body" ref={chatBodyRef}>
             {chatHistory.map((msg, i) => (
               <div key={i} className={`chat-message ${msg.role}`}>
@@ -74,9 +83,12 @@ const ChatBubble = ({ sessionId }) => {
           </div>
         </div>
       )}
-      <button className="chat-toggle" onClick={toggleChat}>
-        {isOpen ? "✕" : "💬"}
-      </button>
+      {/* --- MODIFIED: The toggle button now disappears when the chat is open --- */}
+      {!isOpen && (
+        <button className="chat-toggle" onClick={toggleChat}>
+          💬
+        </button>
+      )}
     </div>
   );
 };
