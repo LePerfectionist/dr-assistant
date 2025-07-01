@@ -1,34 +1,18 @@
 import os
-import io
 import tempfile
-import shutil
-from typing import List, Dict, Any
-import json
-from uuid import uuid4
 from docx import Document
 import pdfplumber
-from fastapi.middleware.cors import CORSMiddleware
-
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from pydantic import BaseModel
 from openai import OpenAI as OpenAIClient
 from dotenv import load_dotenv
-
-
 from llama_parse import LlamaParse
-from llama_index.llms.openai import OpenAI
 from llama_index.core.node_parser import MarkdownElementNodeParser
-from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core import (
     load_index_from_storage,
     VectorStoreIndex,
     StorageContext,
 )
-from llama_index.core.memory import Memory
-from llama_index.core.llms import ChatMessage
 from llama_index.core import Settings
 from llama_index.llms.openai import OpenAI as LlamaOpenAI
-from llama_index.core.chat_engine import ContextChatEngine
 
 load_dotenv()
 
@@ -137,11 +121,11 @@ def add_dr_steps_to_index(session_id: str, dr_steps: str, persist_dir="embedding
 
 
 
-def get_query_engine(embedding_path="embeddings/runbooks_index"):
+def get_query_engine(embedding_path="embeddings/runbooks_index", similarity_top_k=5):
     storage_context = StorageContext.from_defaults(persist_dir=embedding_path)
     vectorstore = load_index_from_storage(storage_context=storage_context)
     print("Docs in index:", len(vectorstore.docstore.docs))
-    query_engine = vectorstore.as_query_engine(similarity_top_k=5)
+    query_engine = vectorstore.as_query_engine(similarity_top_k)
 
     return query_engine
 

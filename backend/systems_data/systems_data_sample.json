@@ -1,0 +1,86 @@
+{
+    "Core Banking": {
+        "dr_data": "Active-Passive setup across DC1 and DC2. DR fallback via DNS switch.",
+        "dependencies": []
+    },
+    "Internet Banking": {
+        "dr_data": "Cloud-based DR with auto-scaling. Manual failover via load balancer.",
+        "dependencies": []
+    },
+    "Mobile Banking": {
+        "dr_data": "Hybrid DR with container replication. Fallback via Kubernetes redeploy.",
+        "dependencies": []
+    },
+    "Payment Gateway": {
+        "dr_data": "Real-time replication to DR site. Failover via routing switch.",
+        "dependencies": []
+    },
+    "Loan Origination": {
+        "dr_data": "Scheduled sync to DR. Manual activation via DR script.",
+        "dependencies": []
+    },
+    "CRM System": {
+        "dr_data": "Cloud DR with snapshot restore. Fallback via cloud console.",
+        "dependencies": []
+    },
+    "Email System": {
+        "dr_data": "DR via secondary MX records. Failover automatic.",
+        "dependencies": []
+    },
+    "Document Management": {
+        "dr_data": "DR via replicated storage. Manual mount and service restart.",
+        "dependencies": []
+    },
+    "ATM Switch": {
+        "dr_data": "DR via redundant hardware. Failover via hardware switch.",
+        "dependencies": []
+    },
+    "Reporting System": {
+        "dr_data": "DR via nightly ETL to DR DB. Manual report engine activation.",
+        "dependencies": []
+    },
+    "Web Server": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.1\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Oracle DB": {
+        "dr_data": "1. Connect to Oracle DB server: ssh oracle@192.168.1.101\n2. Check DB status: sqlplus / as sysdba -> SELECT status FROM v$instance;\n3. Restart DB if needed: shutdown immediate; startup;\n4. Validate application connectivity.\n5. Notify DB admin and update ticket.",
+        "dependencies": []
+    },
+    "App Server": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.2\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Database": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.3\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Firewall": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.4\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Load Balancer": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.5\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Monitoring System": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.6\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Storage System": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.7\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Network Switch": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.8\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "VPN Gateway": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.9\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    },
+    "Cloud Service": {
+        "dr_data": "1. Identify the impacted server using monitoring tools.\n2. SSH into the server using credentials: ssh admin@192.168.1.10\n3. Check system logs: tail -n 100 /var/log/syslog\n4. Restart affected services: sudo systemctl restart <service>\n5. Validate service status: sudo systemctl status <service>\n6. Notify stakeholders and update incident ticket.",
+        "dependencies": []
+    }
+}

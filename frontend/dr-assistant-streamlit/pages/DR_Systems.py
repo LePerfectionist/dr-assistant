@@ -39,7 +39,7 @@ if uploaded_files and not st.session_state.uploaded:
         st.stop()
 
 
-    systems_data = res.json()["extracted_data"]
+    systems_data = res.json()["systems_data"]
     for system in systems_data:
         st.subheader(system)
         st.markdown(systems_data[system]["dr_data"])
