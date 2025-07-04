@@ -4,8 +4,10 @@ from docx import Document
 import pdfplumber
 from openai import OpenAI as OpenAIClient
 from dotenv import load_dotenv
+import json
 from llama_parse import LlamaParse
 from llama_index.core.node_parser import MarkdownElementNodeParser
+from llama_index.core.node_parser import HierarchicalNodeParser
 from llama_index.core import (
     load_index_from_storage,
     VectorStoreIndex,
@@ -27,6 +29,15 @@ openai_client = OpenAIClient(api_key=openai_api_key)
 llama_cloud_api_key = os.getenv("LLAMA_CLOUD_API_KEY")
 if not llama_cloud_api_key:
     raise ValueError("LLAMA_CLOUD_API_KEY is not set in .env file")
+
+def get_llama_parser():
+    return LlamaParse(result_type="markdown", api_key=llama_cloud_api_key)
+
+def get_markdown_node_parser():
+    return MarkdownElementNodeParser(llm=llm, num_workers=15)
+
+def get_hierarchical_node_parser():
+    return HierarchicalNodeParser(llm=llm, num_workers=15)
 
 
 def extract_text_from_folder(folder_path: str):
@@ -93,12 +104,12 @@ async def create_embedding(uploaded_files, persist_dir="embeddings/runbooks_inde
 
     return persist_dir
 
-def get_openai_chat_completion_repsonse(prompt: str, context_text: str):
+def get_openai_chat_completion_repsonse(user_prompt: str, system_prompt: str = "You are a helpful assistant."):
     completion = openai_client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": f"Runbook Context:\n\n{context_text}"}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             temperature=0.5,
         )
@@ -141,11 +152,11 @@ def get_chat_engine(memory, system_prompt="", embedding_path="embeddings/runbook
 
 import re
 
-def extract_json_from_response(response_text: str) -> str:
+def extract_json_from_response(response_text: str) -> dict:
     """
     Extracts JSON content from a string wrapped in markdown-style triple backticks.
     """
     match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response_text, re.DOTALL)
     if match:
-        return match.group(1).strip()
-    return response_text.strip()  # fallback if no fences found
+        return json.loads(match.group(1).strip())
+    return json.loads(response_text.strip())  # fallback if no fences found

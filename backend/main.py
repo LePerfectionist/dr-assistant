@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from llama_index.core.memory import ChatMemoryBuffer
 
 
-from models import(
+from schema import(
     DRStepsRequest,
     DRStepsResponse,
     ExtractDRSystemsResponse,
@@ -22,7 +22,9 @@ from helpers import(
     create_embedding, 
     get_openai_chat_completion_repsonse,
     get_chat_engine,
-    extract_json_from_response
+    extract_json_from_response,
+    get_hierarchical_node_parser,
+    get_llama_parser
 )
 
 
@@ -64,7 +66,7 @@ async def upload_runbooks(files: List[UploadFile] = File(...)):
 dr_memory: Dict[str, str] = {}
 
 @app.post("/generate-dr-steps", response_model=DRStepsResponse)
-async def generate_dr_plan(request: DRStepsRequest):
+async def generate_dr_steps(request: DRStepsRequest):
     print("Entering dr step generation")
     try:
         session_folder = f"runbooks"   #Ideally to be replaced by session upload dir
@@ -83,7 +85,7 @@ async def generate_dr_plan(request: DRStepsRequest):
         prompt = prompt_template.format(failover_systems=failover_systems)
 
         #Get response from either chat completion or embedding (comment out one)
-        dr_steps_text = get_openai_chat_completion_repsonse(prompt, context_text)
+        dr_steps_text = get_openai_chat_completion_repsonse(system_prompt=prompt, user_prompt=context_text)
         # dr_steps_text = get_query_engine().query(prompt).response
 
         dr_memory[request.session_id] = dr_steps_text
@@ -128,9 +130,8 @@ async def extract_dr_systems(files: List[UploadFile] = File(...)):
                 print("LLM call failed\n", e)
             if response:
                 systems_data_memory[session_id] = response
-                json_str = extract_json_from_response(response)
+                systems_data = extract_json_from_response(response)
             try:
-                systems_data = json.loads(json_str)
                 #Save systems data json against session_id
                 with open(f"systems_data\\{session_id}.json", "w") as f:
                     json.dump(systems_data, f, indent=4)
@@ -146,7 +147,38 @@ async def extract_dr_systems(files: List[UploadFile] = File(...)):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
-    return ExtractDRSystemsResponse(session_id=session_id, systems_data=systems_data) 
+    return ExtractDRSystemsResponse(session_id=session_id, systems_data=systems_data)
+
+
+@app.post("/extract_dr_systems", response_model=ExtractDRSystemsResponse)
+async def extract_dr_systems(files: List[UploadFile] = File(...)):
+    print("Entering extract dr systems")
+    session_id = str(uuid4())
+    llama_parser = get_llama_parser()
+    documents = await llama_parser.load_data_from_files("runbooks\\sample_runbook.docx")
+    node_parser = get_hierarchical_node_parser()
+    nodes = node_parser.get_nodes_from_documents(documents)
+    relevant_nodes = []
+    keywords = ["DR", "disaster", "recovery", "failover", "fallback", "redundant"]
+
+    for node in nodes:
+        if any(kw.lower() in node.text.lower() for kw in keywords):
+            relevant_nodes.append(node)
+
+
+    with open("prompts\\system_extraction_from_node.txt") as f:
+        prompt_template = f.read()
+
+    dr_extracted = []
+
+    for node in relevant_nodes:
+        prompt = prompt_template.format(text=node.text)
+        response = get_openai_chat_completion_repsonse(user_prompt=prompt)
+        parsed_data = extract_json_from_response(response)
+        if parsed_data["is_dr_section"]:
+            node.metadata["system_info"] = parsed_data
+            dr_extracted.append(node)
+
 
 @app.post("/validate_systems", response_model=ExtractDRSystemsResponse)
 async def validate_systems(files: List[UploadFile] = File(...)):

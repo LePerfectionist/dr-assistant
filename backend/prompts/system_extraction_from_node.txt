@@ -1,0 +1,22 @@
+You're a Disaster Recovery expert.
+
+**SCENARIO:**
+A general Infra manual/runbook has been uploaded with information on several systems,
+some of which have sections on DR Steps
+**YOUR TASK:**
+Given the following runbook section chunk/node, tell me:
+1. Whether this contains DR-related steps (yes/no)
+2. If yes, extract the system name, DR strategy/steps, any mentioned dependencies, and any mentioned key contacts
+
+Return in JSON:
+{
+  "is_dr_section": true/false,
+  "system_name": "...",
+  "dr_data": "...",
+  "dependencies": [...],
+  "key_contacts": [...]
+}
+
+
+Text:
+{text}
