@@ -9,7 +9,9 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     email: str
-    role: str = "admin"  # or admin/checker
+    password: str
+    role: str = "admin"
     created_at: datetime = Field(default_factory=datetime.timezone.utc)
+    updated_at: datetime = Field(default_factory=datetime.timezone.utc)
 
     application: Optional["Application"] = Relationship(back_populates="user")

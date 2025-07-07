@@ -37,7 +37,9 @@ def get_markdown_node_parser():
     return MarkdownElementNodeParser(llm=llm, num_workers=15)
 
 def get_hierarchical_node_parser():
-    return HierarchicalNodeParser(llm=llm, num_workers=15)
+    return HierarchicalNodeParser.from_defaults(
+        chunk_sizes=[2048, 512, 128]
+    )
 
 
 def extract_text_from_folder(folder_path: str):

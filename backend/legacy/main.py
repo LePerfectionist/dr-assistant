@@ -41,27 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.post("/upload_runbooks")
-async def upload_runbooks(files: List[UploadFile] = File(...)):
-    print("Entering upload runbooks")
-    session_id = str(uuid4())
-    embedding_path = "embeddings/runbooks_index"
-    try:
-        if not os.path.exists(embedding_path):
-            await create_embedding(files, embedding_path)
-        else:
-            print("Embeddings already created")
-        # if os.path.exists("embeddings/runbooks_index"):
-        #     shutil.rmtree("embeddings/runbooks_index")
-
-        # await create_embedding(files, embedding_path)
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"session_id": session_id}
-
-
 #Global DR Steps cache
 dr_memory: Dict[str, str] = {}
 
@@ -148,80 +127,3 @@ async def extract_dr_systems(files: List[UploadFile] = File(...)):
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
     return ExtractDRSystemsResponse(session_id=session_id, systems_data=systems_data)
-
-
-@app.post("/extract_dr_systems", response_model=ExtractDRSystemsResponse)
-async def extract_dr_systems(files: List[UploadFile] = File(...)):
-    print("Entering extract dr systems")
-    session_id = str(uuid4())
-    llama_parser = get_llama_parser()
-    documents = await llama_parser.load_data_from_files("runbooks\\sample_runbook.docx")
-    node_parser = get_hierarchical_node_parser()
-    nodes = node_parser.get_nodes_from_documents(documents)
-    relevant_nodes = []
-    keywords = ["DR", "disaster", "recovery", "failover", "fallback", "redundant"]
-
-    for node in nodes:
-        if any(kw.lower() in node.text.lower() for kw in keywords):
-            relevant_nodes.append(node)
-
-
-    with open("prompts\\system_extraction_from_node.txt") as f:
-        prompt_template = f.read()
-
-    dr_extracted = []
-
-    for node in relevant_nodes:
-        prompt = prompt_template.format(text=node.text)
-        response = get_openai_chat_completion_repsonse(user_prompt=prompt)
-        parsed_data = extract_json_from_response(response)
-        if parsed_data["is_dr_section"]:
-            node.metadata["system_info"] = parsed_data
-            dr_extracted.append(node)
-
-
-@app.post("/validate_systems", response_model=ExtractDRSystemsResponse)
-async def validate_systems(files: List[UploadFile] = File(...)):
-    0
-    
-chat_memory_store = {}
-
-@app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    print("Chat endpoint hit")
-    try:
-        # Per-session memory
-        if request.session_id not in chat_memory_store:
-            chat_memory_store[request.session_id] = ChatMemoryBuffer(token_limit=1500)
-        memory = chat_memory_store[request.session_id]
-
-        system_prompt = ""
-        # if (
-        #     request.include_dr_context 
-        #     and request.session_id in dr_memory
-        # ):
-        #     system_prompt = f"DR Steps to be used as context:\n\n{dr_memory[request.session_id]}"
-        if (
-            request.include_dr_context 
-            and request.session_id in systems_data_memory
-        ):
-            system_prompt = f"DR Systems to be used as context:\n\n{systems_data_memory[request.session_id]}"
-
-
-        chat_engine = get_chat_engine(memory, system_prompt)
-
-
-        response = chat_engine.chat(request.question).response
-        return ChatResponse(answer=response)
-
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
-    
-
-
-    
-
-   
-
-    
