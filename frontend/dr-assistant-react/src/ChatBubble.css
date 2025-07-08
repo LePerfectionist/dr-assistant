@@ -1,44 +1,45 @@
 .chatbot-container {
-  position: fixed;
+  position: fixed; /* stays in the same place when you scroll */
   bottom: 24px;
   right: 24px;
-  z-index: 1000;
-  display: flex; /* Helps align the chatbox and toggle button */
+  z-index: 1000; /* ensures it stays on top */
+  display: flex;
   flex-direction: column;
-  align-items: flex-end; /* Aligns items to the right */
+  align-items: flex-end; /* aligns to the right */
 }
 
+/* Floating chat icon/button */
 .chat-toggle {
   background-color: #4a90e2;
   color: #fff;
   border: none;
-  border-radius: 50%;
+  border-radius: 50%; /* makes it a circle */
   width: 60px;
   height: 60px;
   font-size: 28px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* subtle shadow */
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s; /* smooth zoom effect */
 }
 
 .chat-toggle:hover {
-  transform: scale(1.05);
+  transform: scale(1.05); /* zooms when hovered */
 }
 
+/* Full chat window */
 .chatbox {
   background: white;
   width: 380px;
-  /* --- MODIFIED: Set a fixed height for a larger default size --- */
   height: 440px;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* hide scrollbars */
   margin-bottom: 10px;
 }
 
-/* --- MODIFIED: Header is now a flex container --- */
+/* Header bar at the top of the chat */
 .chat-header {
   background-color: #4a90e2;
   color: white;
@@ -50,7 +51,7 @@
   align-items: center;
 }
 
-/* --- NEW: Style for the top-right close button --- */
+/* Close (X) button in header */
 .chat-close-btn {
   background: none;
   border: none;
@@ -61,35 +62,40 @@
   line-height: 1;
 }
 
+/* Area showing chat messages */
 .chat-body {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1; /* fills available space */
+  overflow-y: auto; /* allows scrolling */
   padding: 12px;
   background-color: #f5f5f5;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 10px; /* spacing between messages */
 }
 
+/* Each chat message */
 .chat-message {
   padding: 10px 14px;
   border-radius: 14px;
-  max-width: 80%; /* Increased width a bit */
+  max-width: 80%;
   word-wrap: break-word;
   line-height: 1.5;
   white-space: pre-wrap;
 }
 
+/* User's message style */
 .chat-message.user {
   background-color: #d0f0fd;
   align-self: flex-end;
 }
 
+/* Assistant's message style */
 .chat-message.assistant {
-  background-color: #e9e9eb; /* A more neutral gray */
+  background-color: #e9e9eb;
   align-self: flex-start;
 }
 
+/* Input area at the bottom */
 .chat-input-area {
   display: flex;
   border-top: 1px solid #ddd;
@@ -99,6 +105,7 @@
   align-items: center;
 }
 
+/* Message textarea input */
 .chat-input-area textarea {
   flex: 1;
   resize: none;
@@ -113,6 +120,7 @@
   transition: all 0.2s ease;
 }
 
+/* Send button beside input */
 .chat-input-area button {
   background: #4a90e2;
   border: none;

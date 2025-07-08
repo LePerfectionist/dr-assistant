@@ -18,6 +18,28 @@ from app.helpers import (
     extract_json_from_response
 )
 
+def get_relevant_nodes_from_runbook(runbook):
+    llama_parser = LlamaParse(page_prefix="START OF PAGE: {pageNumber}\n",page_suffix="\nEND OF PAGE: {pageNumber}",api_key="",verbose=True,result_type="markdown")
+    documents = llama_parser.load_data(runbook.storage_path)
+    for i, doc in enumerate(documents, start=1):
+        doc.metadata["page_number"] = i
+    # node_parser = get_markdown_node_parser()
+    node_parser = get_hierarchical_node_parser()
+
+    nodes = node_parser.get_nodes_from_documents(documents)
+    leaf_nodes = get_leaf_nodes(nodes)
+    print(f"Total number of nodes parsed: {len(nodes)}\n")
+
+    relevant_nodes = []
+    keywords = ["DR", "disaster", "recovery", "failover", "fallback", "redundant"]
+    for node in leaf_nodes:
+        if any(kw.lower() in node.text.lower() for kw in keywords):
+            relevant_nodes.append(node)
+
+    print(f"Found {len(relevant_nodes)} relevant nodes.")
+    return relevant_nodes
+
+
 router = APIRouter(prefix="/extraction", tags=["Extraction"])
 
 @router.post("/{application_id}/extract_systems", response_model=List[SystemResponse])
@@ -42,92 +64,36 @@ def extract_dr_systems(
     if not application.runbooks:
         raise HTTPException(status_code=400, detail="No runbook found for this application.")
 
-    runbook = application.runbooks[0] # Assuming one runbook per application for now
-    
-    llama_parser = LlamaParse(page_prefix="START OF PAGE: {pageNumber}\n",page_suffix="\nEND OF PAGE: {pageNumber}",api_key="",verbose=True,result_type="markdown")
-    documents = llama_parser.load_data(runbook.storage_path)
-    for i, doc in enumerate(documents, start=1):
-        doc.metadata["page_number"] = i
-    # node_parser = get_markdown_node_parser()
-    node_parser = get_hierarchical_node_parser()
+    for runbook in application.runbooks:
+        # Parse runbook and extract relevant nodes by keyword
+        relevant_nodes = get_relevant_nodes_from_runbook(runbook)
 
-    nodes = node_parser.get_nodes_from_documents(documents)
-    leaf_nodes = get_leaf_nodes(nodes)
-    print(f"Total number of nodes parsed: {len(nodes)}\n")
+        with open("app/prompts/system_extraction_from_node.txt") as f:
+            prompt_template = f.read()
 
-    relevant_nodes = []
-    keywords = ["DR", "disaster", "recovery", "failover", "fallback", "redundant"]
-    for node in leaf_nodes:
-        if any(kw.lower() in node.text.lower() for kw in keywords):
-            relevant_nodes.append(node)
-    
-    print(f"Found {len(relevant_nodes)} relevant nodes.")
+        newly_created_systems = []
+        for node in relevant_nodes:
+            prompt = prompt_template.format(text=node.text)
+            response = get_openai_chat_completion_repsonse(user_prompt=prompt)
+            parsed_data = extract_json_from_response(response)
 
-    # 4. Process nodes and save to DB
-    with open("app/prompts/system_extraction_from_node.txt") as f:
-        prompt_template = f.read()
+            if parsed_data and parsed_data.get("is_dr_section"):
+                system_to_create = System(
+                    name=parsed_data.get("system_name", "Unknown System"),
+                    dr_data=parsed_data.get("dr_data", ""),
+                    dependencies=parsed_data.get("dependencies", []),
+                    key_contacts=parsed_data.get("key_contacts", []),
+                    application_id=application_id,
+                    source_reference=f"File: {runbook.filename}, Page Number: {node.metadata['page_number']}, Section near text: '{node.text[:25]}...'"
+                )
+                session.add(system_to_create)
+                newly_created_systems.append(system_to_create)
 
-    newly_created_systems = []
-    for node in relevant_nodes:
-        prompt = prompt_template.format(text=node.text)
-        response = get_openai_chat_completion_repsonse(user_prompt=prompt)
-        parsed_data = extract_json_from_response(response)
-
-        if parsed_data and parsed_data.get("is_dr_section"):
-            system_to_create = System(
-                name=parsed_data.get("system_name", "Unknown System"),
-                dr_data=parsed_data.get("dr_data", ""),
-                dependencies=parsed_data.get("dependencies", []),
-                key_contacts=parsed_data.get("key_contacts", []),
-                application_id=application_id,
-                source_reference=f"File: {runbook.filename}, Page Number: {node.metadata['page_number']}, Section near text: '{node.text[:50]}...'"
-            )
-            session.add(system_to_create)
-            newly_created_systems.append(system_to_create)
-
-    if newly_created_systems:
-        session.commit()
-        for system in newly_created_systems:
-            session.refresh(system) # Ensure IDs are loaded back
+        if newly_created_systems:
+            session.commit()
+            for system in newly_created_systems:
+                session.refresh(system) # Ensure IDs are loaded back
 
     # Return all systems for this application, including any pre-existing ones.
     return application.systems
 
-# FILE: app/routers/extraction.py (TEMPORARY TEST CODE)
-
-# from fastapi import APIRouter, Depends, HTTPException
-# from sqlmodel import Session
-# from typing import List
-
-# from app.database import get_session
-# from app.models.application import Application
-# from app.models.user import User
-# from app.schema import SystemResponse # This schema won't be used, but keep for valid import
-# from app.routers.auth import get_current_user
-
-# router = APIRouter(prefix="/extraction", tags=["Extraction"])
-
-# @router.post("/{application_id}/extract_systems", response_model=List[SystemResponse])
-# def extract_dr_systems(
-#     application_id: int,
-#     session: Session = Depends(get_session),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     """
-#     A minimal test endpoint to check authentication and ownership.
-#     """
-#     # 1. Get the Application from the database
-#     application = session.get(Application, application_id)
-#     if not application:
-#         raise HTTPException(status_code=404, detail="Application not found.")
-    
-#     # 2. Perform the security check
-#     if application.user_id != current_user.id:
-#         raise HTTPException(
-#             status_code=403, 
-#             detail=f"Forbidden: You (user_id={current_user.id}) do not own this application (owned by user_id={application.user_id})."
-#         )
-    
-#     # 3. If we get here, it worked. Return an empty list to satisfy the response_model.
-#     print(f"SUCCESS: User {current_user.email} (ID: {current_user.id}) successfully accessed Application ID: {application_id}")
-#     return []

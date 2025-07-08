@@ -1,110 +1,281 @@
-.app-container {
-  font-family: "Segoe UI", sans-serif;
-  padding: 2rem;
-  background: #f2f6fa;
-  min-height: 100vh;
-  position: relative; /* This is important for the ChatBubble's positioning */
+/* === App Container === */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f2f5; /* Light gray background for overall page */
+  color: #2d3748; /* Dark blue-gray text */
 }
 
-/* --- NEW STYLES FOR THE CENTERED CONTAINER --- */
-.main-content {
-  max-width: 700px; /* Adjust this value to your liking */
-  margin: 0 auto; /* This horizontally centers the container */
-  width: 100%; /* Ensures it's responsive on smaller screens */
+.container {
+  display: flex; /* Horizontal layout: sidebar + content */
+  height: 100vh; /* Full height of the viewport */
 }
-/* --- END OF NEW STYLES --- */
 
-.header {
+/* === Sidebar Styles === */
+.sidebar {
+  width: 280px; /* Fixed width */
+  background-color: #0d1b2a; /* Deep navy background */
+  color: white;
+  padding: 20px;
+  overflow-y: auto; /* Scroll if content overflows */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Subtle shadow on right edge */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar header */
+.sidebar h2 {
+  font-size: 16px;
+  color: #e2e8f0;
+  margin-bottom: 12px;
+}
+
+/* === File Search Input === */
+.file-search {
+  padding: 14px 12px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  margin-bottom: 16px;
+  background-color: #1b263b; /* Dark blue input */
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+/* === File Upload Box === */
+.file-upload {
+  background-color: #1e293b; /* Dark box */
+  color: #cbd5e0;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px dashed #3d5a80; /* Dashed outline */
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+/* === Clear Button === */
+.clear-btn {
+  background-color: #e53e3e; /* Red */
+  border: none;
+  color: white;
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.clear-btn:hover {
+  background-color: #c53030; /* Darker red on hover */
+}
+
+/* === Uploaded Files List === */
+.file-list {
+  flex-grow: 1; /* Fill available space */
+}
+
+/* === Each File Container === */
+.file-container {
+  border-radius: 6px;
+  margin-bottom: 14px; /* Gap between files */
+  transition: background 0.2s;
+}
+
+/* === Header for Each File === */
+.file-header {
   display: flex;
   align-items: center;
-  padding: 20px;
-  background-color: #f5f5f5;
-  /* Making header corners rounded to match other sections */
-  border-radius: 10px;
-  margin-bottom: 1rem;
-}
-
-.logo {
-  height: 50px;
-  margin-right: 16px;
-}
-
-.title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #333;
-}
-
-.upload-section,
-.system-section,
-.result-section {
-  background: white;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.section-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
-  color: #333;
-}
-
-.file-input {
-  margin-bottom: 1rem;
-}
-
-.upload-button,
-.generate-button {
-  padding: 0.5rem 1rem;
-  background-color: #0052cc;
-  color: white;
-  border: none;
-  border-radius: 5px;
+  justify-content: space-between;
+  font-weight: 500;
+  padding: 10px 12px;
   cursor: pointer;
-  margin-top: 0.5rem;
+  color: #e2e8f0;
+  background-color: #1e293b; /* Dark blue */
+  border-radius: 6px;
+  margin: 1px 1px;
+  transition: background-color 0.2s ease;
+}
+.file-header:hover {
+  background-color: #33415c;
 }
 
-.upload-button[disabled],
-.generate-button[disabled] {
-  opacity: 0.7;
-  cursor: not-allowed;
+/* === Expand Icon (▶ or ▼) === */
+.expand-icon {
+  margin-right: 6px;
+  color: #90cdf4; /* Light blue arrow */
 }
 
-.upload-status {
-  margin-top: 0.5rem;
-  color: green;
+/* === File Delete (✕ icon) === */
+.file-delete {
+  color: #f56565;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+.file-delete:hover {
+  color: #feb2b2;
+}
+
+/* === Heading for Section Label (like "Sections") === */
+.section-heading {
+  color: #a0aec0;
+  font-size: 18px;
+  margin: 16px 0 6px;
+  padding-left: 4px;
+  border-bottom: 1px solid #33415c;
+}
+
+/* === Section Group === */
+.section-group {
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #33415c; /* Left bar for visual grouping */
+}
+
+/* === Individual Section Buttons === */
+.section-item {
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #cbd5e0;
+  background-color: #1e293b;
+  font-size: 14px;
+}
+.section-item:hover {
+  background-color: #3d5a80; /* Highlight on hover */
+}
+.section-item.active {
+  background-color: #38bdf8; /* Bright blue for selected section */
+  color: white;
+  font-weight: 600;
+}
+
+/* === Section Search Bar === */
+.section-search {
+  margin-top: 6px;
+  width: 90%;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: none;
+  background-color: #2d3748;
+  color: #e0e0e0;
+  margin-bottom: 6px;
+}
+
+/* === Main Content Area === */
+.main-content {
+  flex: 1; /* Takes remaining space */
+  padding: 32px;
+  overflow-y: auto;
+  background-color: #fff;
+}
+
+/* Title of selected section */
+.main-content h2 {
+  font-size: 24px;
+  margin-top: 0;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 6px;
+}
+
+/* Markdown Text Box */
+.markdown-content {
+  background-color: #f7fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* === Validation Status Box === */
+.status {
+  background-color: #e6fffa;
+  padding: 8px 12px;
+  border-left: 5px solid #38b2ac; /* Teal left bar */
+  margin: 16px 0;
+  border-radius: 4px;
+  color: #234e52;
   font-weight: 500;
 }
 
-.system-row {
+/* === Audit Log List === */
+.audit-log {
+  margin-top: 24px;
+  background-color: #f1f5f9;
+  padding: 16px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.audit-log ul {
+  list-style: none;
+  padding-left: 0;
+}
+.audit-log li::before {
+  content: '⏺';
+  margin-right: 6px;
+  color: #4299e1;
+}
+.audit-log li {
+  margin-bottom: 6px;
+}
+
+/* === Buttons === */
+.btn {
+  padding: 10px 16px;
+  margin: 10px 10px 10px 0;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Validate Button */
+.validate-btn {
+  background-color: #38a169;
+  color: white;
+}
+.validate-btn:hover {
+  background-color: #2f855a;
+}
+
+/* Revoke Button */
+.revoke-btn {
+  background-color: #e53e3e;
+  color: white;
+}
+.revoke-btn:hover {
+  background-color: #c53030;
+}
+
+/* === ChatBot Floating Button === */
+.chatbot-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
-.result-section * {
-  margin-top: 0;
-  margin-bottom: 0.25rem; /* Apply a tiny margin to everything */
+/* Floating circular Chat toggle */
+.chat-toggle {
+  background-color: #4a90e2;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s;
 }
-
-/* Then, add back a little more space just for headers to maintain hierarchy */
-.result-section h1,
-.result-section h2,
-.result-section h3 {
-  color: #003366;
-  margin-top: 1rem; /* Give headers breathing room */
-  margin-bottom: 0.25rem;
+.chat-toggle:hover {
+  transform: scale(1.05);
 }
-
-.result-section ul,
-.result-section ol {
-   padding-left: 20px; /* Ensure lists are still indented */
-}
-
-
-
-/* ------------------------------------------------------ */
-
