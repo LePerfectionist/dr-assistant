@@ -3,8 +3,10 @@ fastapi>=0.110.0
 uvicorn[standard]>=0.29.0
 fastapi[standard]
 
+
 # Type validation and models
 pydantic>=2.6.0
+pydantic-settings
 
 # Environment variable loader
 python-dotenv>=1.0.1
@@ -25,4 +27,8 @@ streamlit
 python-docx
 pdfplumber
 Document
+
+python-jose==3.5.0
+passlib==1.7.4
+bcrypt==4.3.0
 

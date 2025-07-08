@@ -3,13 +3,14 @@ from typing import List, Optional, Dict
 from datetime import datetime
 from fastapi import File, UploadFile
 
+class SystemBase(BaseModel):
+    name: str
+    dr_data: str
+    dependencies: List[str]
+    key_contacts: List[str]
 
-class ExtractedSystem(BaseModel):
-    """A data schema for a single DR system extracted from a document."""
-    name: str = Field(description="The name of the application or system. e.g., 'Oracle Finance DB', 'Main Web App Cluster'.")
-    dr_data: str = Field(description="A summary of the key disaster recovery procedures or information for this system.")
-    dependencies: Optional[List[str]] = Field(description="A list of other systems or services this system depends on for recovery.")
-    key_contacts: Optional[List[str]] = Field(description="A list of key contacts or teams responsible for this system's recovery (names or email addresses).")
+
+
 
 
 class DRSystem(BaseModel):
@@ -45,3 +46,62 @@ class ExtractDRSystemsRequest(BaseModel):
 class ExtractDRSystemsResponse(BaseModel):
     session_id: str
     systems_data: Dict
+
+
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
+from datetime import datetime
+
+# --- System Schemas ---
+# This is what we expect to get back from the LLM and what we'll return from the API.
+class SystemBase(BaseModel):
+    name: str
+    dr_data: str
+    dependencies: List[str]
+    key_contacts: List[str]
+
+class SystemResponse(SystemBase):
+    id: int
+    is_approved: bool
+    source_reference: Optional[str]
+
+    class Config:
+        orm_mode = True # Helps Pydantic read data from ORM objects
+
+# --- Runbook Schemas ---
+class RunbookResponse(BaseModel):
+    id: int
+    filename: str
+    
+    class Config:
+        orm_mode = True
+
+# --- Application Schemas ---
+class ApplicationResponse(BaseModel):
+    id: int
+    user_id: int
+    started_at: datetime
+    runbooks: List[RunbookResponse] = []
+    
+    class Config:
+        orm_mode = True
+
+# --- User Schemas ---
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: str
+
+    class Config:
+        orm_mode = True
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[str] = None
+    password: Optional[str] = None

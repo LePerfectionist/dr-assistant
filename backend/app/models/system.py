@@ -2,7 +2,7 @@ from sqlmodel import JSON, Column, SQLModel, Field, Relationship
 from datetime import datetime
 from typing import Optional, List
 
-from application import Application
+from .application import Application
 
 class System(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -15,5 +15,5 @@ class System(SQLModel, table=True):
     approved_at: Optional[datetime]
     source_reference: Optional[str]
 
-    application_id: int = Field(foreign_key="application.id")
+    application_id: str = Field(foreign_key="application.id")
     application: Optional[Application] = Relationship(back_populates="systems")

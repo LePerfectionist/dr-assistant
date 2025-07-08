@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 from typing import Optional, List
 
-from application import Application
+from .application import Application
 
 
 class User(SQLModel, table=True):
@@ -11,7 +11,7 @@ class User(SQLModel, table=True):
     email: str
     password: str
     role: str = "admin"
-    created_at: datetime = Field(default_factory=datetime.timezone.utc)
-    updated_at: datetime = Field(default_factory=datetime.timezone.utc)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     application: Optional["Application"] = Relationship(back_populates="user")

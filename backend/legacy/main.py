@@ -127,3 +127,58 @@ async def extract_dr_systems(files: List[UploadFile] = File(...)):
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
     return ExtractDRSystemsResponse(session_id=session_id, systems_data=systems_data)
+
+
+@app.post("/extract_dr_systems")
+async def extract_dr_systems():
+    print("Entering extract dr systems")
+    session_id = str(uuid4())
+
+    llama_parser = LlamaParse(page_prefix="START OF PAGE: {pageNumber}\n",page_suffix="\nEND OF PAGE: {pageNumber}",api_key="",verbose=True,result_type="markdown")
+    # Load the document again with the new parser settings
+    file_name = "sample_runbook.docx"
+    extra_info = {"file_name": file_name, "file_type": "docx"}
+
+    documents = llama_parser.load_data("app\\runbooks\\sample_runbook.docx", extra_info=extra_info)
+    for i, doc in enumerate(documents, start=1):
+        doc.metadata["page_number"] = i
+    # node_parser = get_markdown_node_parser()
+    node_parser = get_hierarchical_node_parser()
+    nodes = node_parser.get_nodes_from_documents(documents)
+    leaf_nodes = get_leaf_nodes(nodes)
+    print(f"Total number of nodes parsed: {len(nodes)}\n")
+
+    relevant_nodes = []
+    keywords = ["DR", "disaster", "recovery", "failover", "fallback", "redundant"]
+
+    for node in leaf_nodes:
+        if any(kw.lower() in node.text.lower() for kw in keywords):
+            relevant_nodes.append(node)
+
+    print(f"Total number of relevant nodes: {len(relevant_nodes)}\n")
+    
+    with open("app\\prompts\\system_extraction_from_node.txt") as f:
+        prompt_template = f.read()
+
+    systems = []
+
+    for i, node in enumerate(relevant_nodes, start=1):
+        if i <10:
+            prompt = prompt_template.format(text=node.text)
+            response = get_openai_chat_completion_repsonse(user_prompt=prompt)
+            parsed_data = extract_json_from_response(response)
+            print("Parsed data:", parsed_data)
+            if parsed_data["is_dr_section"]:
+                system_data = System(
+                    name = parsed_data["system_name"],
+                    dr_data = parsed_data["dr_data"],
+                    dependencies = parsed_data["dependencies"],
+                    key_contacts = parsed_data["key_contacts"],
+                    application_id = uuid4()
+                )
+                systems.append(system_data)
+                print("System extracted:", system_data)
+                break
+    
+    return systems
+
