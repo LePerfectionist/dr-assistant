@@ -12,7 +12,7 @@ class Application(SQLModel, table=True):
     last_updated: datetime = Field(default_factory=datetime.utcnow)
 
     user_id: int = Field(foreign_key="user.id")
-    user: Optional["User"] = Relationship(back_populates="application")
+    user: "User" = Relationship(back_populates="applications")
 
     runbooks: List["RunbookDocument"] = Relationship(back_populates="application")
     systems: List["System"] = Relationship(back_populates="application")

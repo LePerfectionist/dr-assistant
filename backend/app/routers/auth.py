@@ -47,7 +47,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Token expires in 1 hour
 
 # --- Security Utils ---
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login") # The URL of our login endpoint
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login") # The URL of our login endpoint
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verifies a plain password against a hashed one."""

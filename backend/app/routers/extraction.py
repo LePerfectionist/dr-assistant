@@ -7,7 +7,9 @@ from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
 from app.database import get_session
 from app.models.application import Application
 from app.models.system import System
+from app.models.user import User
 from app.schema import SystemResponse
+from app.routers.auth import get_current_user
 # Assuming you have these helper functions somewhere
 from app.helpers import (
     get_markdown_node_parser,
@@ -19,7 +21,10 @@ from app.helpers import (
 router = APIRouter(prefix="/extraction", tags=["Extraction"])
 
 @router.post("/{application_id}/extract_systems", response_model=List[SystemResponse])
-def extract_dr_systems(application_id: int, session: Session = Depends(get_session)):
+def extract_dr_systems(
+    application_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)):
     """
     Extracts DR systems from the runbook associated with a given Application ID.
     """
@@ -27,6 +32,12 @@ def extract_dr_systems(application_id: int, session: Session = Depends(get_sessi
     application = session.get(Application, application_id)
     if not application:
         raise HTTPException(status_code=404, detail="Application not found.")
+    
+    if application.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Forbidden: You do not have permission to access this application."
+        )
     
     if not application.runbooks:
         raise HTTPException(status_code=400, detail="No runbook found for this application.")
@@ -81,3 +92,42 @@ def extract_dr_systems(application_id: int, session: Session = Depends(get_sessi
 
     # Return all systems for this application, including any pre-existing ones.
     return application.systems
+
+# FILE: app/routers/extraction.py (TEMPORARY TEST CODE)
+
+# from fastapi import APIRouter, Depends, HTTPException
+# from sqlmodel import Session
+# from typing import List
+
+# from app.database import get_session
+# from app.models.application import Application
+# from app.models.user import User
+# from app.schema import SystemResponse # This schema won't be used, but keep for valid import
+# from app.routers.auth import get_current_user
+
+# router = APIRouter(prefix="/extraction", tags=["Extraction"])
+
+# @router.post("/{application_id}/extract_systems", response_model=List[SystemResponse])
+# def extract_dr_systems(
+#     application_id: int,
+#     session: Session = Depends(get_session),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """
+#     A minimal test endpoint to check authentication and ownership.
+#     """
+#     # 1. Get the Application from the database
+#     application = session.get(Application, application_id)
+#     if not application:
+#         raise HTTPException(status_code=404, detail="Application not found.")
+    
+#     # 2. Perform the security check
+#     if application.user_id != current_user.id:
+#         raise HTTPException(
+#             status_code=403, 
+#             detail=f"Forbidden: You (user_id={current_user.id}) do not own this application (owned by user_id={application.user_id})."
+#         )
+    
+#     # 3. If we get here, it worked. Return an empty list to satisfy the response_model.
+#     print(f"SUCCESS: User {current_user.email} (ID: {current_user.id}) successfully accessed Application ID: {application_id}")
+#     return []
