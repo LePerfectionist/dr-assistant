@@ -10,7 +10,6 @@ from app.models.system import System
 from app.models.user import User
 from app.schema import SystemResponse
 from app.routers.auth import get_current_user
-# Assuming you have these helper functions somewhere
 from app.helpers import (
     get_markdown_node_parser,
     get_hierarchical_node_parser,

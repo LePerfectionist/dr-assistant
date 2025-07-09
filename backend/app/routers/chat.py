@@ -1,16 +1,87 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
-from sqlalchemy import func
-from typing import List
+# in app/routers/chat.py
 
-from app.database import get_session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session
+from typing import List
+import os
+
+# --- LlamaIndex Imports ---
+from llama_index.core.query_engine import RouterQueryEngine
+from llama_index.core.query_engine import NLSQLTableQueryEngine
+from llama_index.core.tools import QueryEngineTool
+from llama_index.core.selectors import LLMSelector
+from llama_index.core import SQLDatabase, VectorStoreIndex, StorageContext, load_index_from_storage
+from llama_index.llms.openai import OpenAI
+from llama_index.core.settings import Settings
+
+# --- Your App Imports ---
+from app.database import get_session, engine # We need the main engine object
 from app.models.application import Application
-from app.models.system import System
 from app.models.user import User
 from app.schema import ChatRequest, ChatResponse
 from app.routers.auth import get_current_user
 
+# Configure LLM settings (do this once)
+Settings.llm = OpenAI(model="gpt-3.5-turbo")
+
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+# A simple in-memory cache for query engines to avoid rebuilding them on every request
+query_engine_cache = {}
+
+def get_chat_query_engine(application_id: int):
+    """
+    Builds or retrieves from cache the agentic query engine for a specific application.
+    """
+    if application_id in query_engine_cache:
+        print(f"Loading query engine for app {application_id} from cache.")
+        return query_engine_cache[application_id]
+
+    print(f"Building new query engine for app {application_id}...")
+    
+    # 1. --- Create the Database Tool ---
+    sql_database = SQLDatabase(engine, include_tables=["system"])
+    sql_query_engine = NLSQLTableQueryEngine(
+        sql_database=sql_database,
+        tables=["system"],
+        # Add context to help the LLM. It will only query systems for the current app.
+        context_str=f"The user is asking about systems related to application_id {application_id}. All SQL queries MUST include a WHERE clause to filter by application_id = {application_id}."
+    )
+    sql_tool = QueryEngineTool.from_defaults(
+        query_engine=sql_query_engine,
+        name="database_tool",
+        description=(
+            "Use this tool to answer questions about specific approved systems, "
+            "their DR steps, dependencies, or approval status."
+        ),
+    )
+
+    # 2. --- Create the Runbook RAG Tool ---
+    index_storage_path = f"./storage/app_{application_id}"
+    if not os.path.exists(index_storage_path):
+        # Handle case where index doesn't exist for this app
+        return None 
+        
+    storage_context = StorageContext.from_defaults(persist_dir=index_storage_path)
+    index = load_index_from_storage(storage_context)
+    rag_query_engine = index.as_query_engine()
+    rag_tool = QueryEngineTool.from_defaults(
+        query_engine=rag_query_engine,
+        name="runbook_tool",
+        description=(
+            "Use this tool to answer general questions about the runbook's content, "
+            "like policies, overall procedures, or other contextual information."
+        ),
+    )
+
+    # 3. --- Create the Router Agent ---
+    query_engine = RouterQueryEngine(
+        selector=LLMSelector.from_defaults(),
+        query_engine_tools=[sql_tool, rag_tool],
+    )
+    
+    query_engine_cache[application_id] = query_engine
+    return query_engine
 
 @router.post("/{application_id}/query", response_model=ChatResponse)
 def chat_with_application(
@@ -20,59 +91,19 @@ def chat_with_application(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Handles a chat query against a specific application's knowledge base.
-    Phase 1: Queries the structured, approved 'systems' table.
+    Handles a chat query using an agentic router to choose the best data source.
     """
     application = session.get(Application, application_id)
-    if not application:
-        raise HTTPException(status_code=404, detail="Application not found.")
+    if not application or application.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Application not found or access denied.")
+
+    query_engine = get_chat_query_engine(application_id)
+    if not query_engine:
+        raise HTTPException(status_code=404, detail="Knowledge base for this application not yet created. Please run the extraction first.")
+
+    print(f"Routing query: '{request.query}'")
+    response = query_engine.query(request.query)
     
-    if application.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Forbidden: You cannot access this application.")
-
-    # Try to extract a system name from the user's query.
-    # This is a simple implementation; a real version might use an LLM for entity extraction.
-    # For now, we assume the user's query *is* the system name.
-    system_name_query = request.query.strip()
-
-    # Query the database for the MOST RECENTLY APPROVED system matching the name
-    # for this specific application run.
-    statement = (
-        select(System)
-        .where(System.application_id == application_id)
-        .where(func.lower(System.name) == func.lower(system_name_query)) # Case-insensitive search
-        .order_by(System.approved_at.desc().nullslast()) # Prioritize approved systems
-    )
-    
-    relevant_system = session.exec(statement).first()
-
-    # --- Generate the response based on the database lookup ---
-    
-    if not relevant_system:
-        # We will add RAG here in Phase 2. For now, we have no answer.
-        return ChatResponse(answer="I couldn't find any information about that specific system in the validated database.")
-
-    if relevant_system.is_approved:
-        answer_text = (
-            f"Here are the approved Disaster Recovery steps for '{relevant_system.name}':\n\n"
-            f"DR Steps:\n{relevant_system.dr_data}\n\n"
-            f"Dependencies: {', '.join(relevant_system.dependencies) or 'None listed'}\n"
-            f"Key Contacts: {', '.join(relevant_system.key_contacts) or 'None listed'}"
-        )
-        return ChatResponse(
-            answer=answer_text,
-            source_reference=relevant_system.source_reference,
-            is_approved=True,
-            approved_at=relevant_system.approved_at
-        )
-    else:
-        # The system was found but is not yet approved
-        answer_text = (
-            f"I found information for the system '{relevant_system.name}', but it has **NOT been approved** by a checker yet.\n\n"
-            f"The unapproved data is as follows:\n{relevant_system.dr_data}"
-        )
-        return ChatResponse(
-            answer=answer_text,
-            source_reference=relevant_system.source_reference,
-            is_approved=False
-        )
+    # The agent's response is in response.response
+    # The source nodes can be inspected via response.source_nodes
+    return ChatResponse(answer=str(response))
