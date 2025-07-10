@@ -2,10 +2,6 @@ from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 from typing import Optional, List
 
-# from models.runbook import RunbookDocument
-# from models.user import User
-# from models.system import System
-
 class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     started_at: datetime = Field(default_factory=datetime.utcnow)

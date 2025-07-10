@@ -65,3 +65,10 @@ class ChatResponse(BaseModel):
     source_reference: Optional[str] = None
     is_approved: Optional[bool] = None
     approved_at: Optional[datetime] = None
+
+class SystemCreateAdmin(BaseModel):
+    name: str
+    dr_data: str
+    dependencies: List[str] = []
+    key_contacts: List[str] = []
+    source_reference: Optional[str] = "Manually created by admin"
