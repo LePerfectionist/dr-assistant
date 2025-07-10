@@ -1,3 +1,32 @@
+# from fastapi import APIRouter, Depends, HTTPException
+# from sqlmodel import Session, select
+# from app.database import get_session
+# from app.models.user import User
+# from app.schema import UserCreate, UserResponse
+
+# router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# @router.post("/login", response_model=UserResponse)
+# def login_or_create_user(user_data: UserCreate, session: Session = Depends(get_session)):
+#     """
+#     Finds a user by email. If they don't exist, a new user is created.
+#     This is a simplified authentication for now.
+#     """
+#     # Check if user already exists
+#     statement = select(User).where(User.email == user_data.email)
+#     existing_user = session.exec(statement).first()
+
+#     if existing_user:
+#         return existing_user
+
+#     # If not, create a new user
+#     new_user = User.from_orm(user_data) # Create a User model from the Pydantic schema
+#     session.add(new_user)
+#     session.commit()
+#     session.refresh(new_user)
+#     return new_user
+
+# in app/routers/auth.py
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt

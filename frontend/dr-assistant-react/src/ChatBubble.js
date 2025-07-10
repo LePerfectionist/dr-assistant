@@ -1,118 +1,144 @@
-// ChatBubble.js
-import React, { useState, useRef, useEffect } from "react";
-import axios from "axios"; // For making HTTP POST requests
-import "./ChatBubble.css"; // CSS file for styling the chat UI
+// import React, { useState } from "react";
+// import "./ChatBubble.css";
 
-// Reusable floating chatbot component
-const ChatBubble = ({ sessionId }) => {
-  // ------------------- State & Refs -------------------
-  const [isOpen, setIsOpen] = useState(false);      // Whether chatbox is open or hidden
-  const [input, setInput] = useState("");           // Current text typed by the user
-  const [chatHistory, setChatHistory] = useState([]); // Array of past chat messages
-  const chatBodyRef = useRef(null);                 // Ref to auto-scroll chat body
+// function ChatBubble({ token, application }) {
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [messages, setMessages] = useState([]);
+//   const [input, setInput] = useState("");
 
-  // ------------------- Toggle Chat Window -------------------
-  const toggleChat = () => setIsOpen((prev) => !prev);
+//   const handleSend = async () => {
+//     if (!input.trim()) return;
 
-  // ------------------- Send Message -------------------
+//     const userMessage = { role: "user", content: input };
+//     const updatedMessages = [...messages, userMessage];
+//     setMessages(updatedMessages);
+//     setInput("");
+
+//     try {
+//       const res = await fetch("http://localhost:8000/api/v1/chat/ask", {
+//         method: "POST",
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({ question: input, application }),
+//       });
+
+//       const data = await res.json();
+//       const assistantMessage = { role: "assistant", content: data.answer };
+//       setMessages([...updatedMessages, assistantMessage]);
+//     } catch (err) {
+//       setMessages([
+//         ...updatedMessages,
+//         { role: "assistant", content: "❌ Failed to get a response." },
+//       ]);
+//     }
+//   };
+
+//   return (
+//     <div className="chatbot-container">
+//       {!isOpen && (
+//         <button className="chat-toggle" onClick={() => setIsOpen(true)}>💬</button>
+//       )}
+//       {isOpen && (
+//         <div className="chatbox">
+//           <div className="chat-header">
+//             Chat Assistant
+//             <button className="chat-close-btn" onClick={() => setIsOpen(false)}>×</button>
+//           </div>
+
+//           <div className="chat-body">
+//             {messages.map((msg, i) => (
+//               <div key={i} className={`chat-message ${msg.role}`}>
+//                 {msg.content}
+//               </div>
+//             ))}
+//           </div>
+
+//           <div className="chat-input-area">
+//             <textarea
+//               value={input}
+//               onChange={(e) => setInput(e.target.value)}
+//               placeholder="Ask a question..."
+//             />
+//             <button onClick={handleSend}>Send</button>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+// export default ChatBubble;
+import React, { useState } from "react";
+import "./ChatBubble.css";
+
+function ChatBubble({ token, application }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+
   const handleSend = async () => {
-    // Prevent empty message
     if (!input.trim()) return;
 
     const userMessage = { role: "user", content: input };
-
-    // Append user message to history
-    setChatHistory((prev) => [...prev, userMessage]);
-
-    const messageToSend = input;
-    setInput(""); // Clear input field immediately
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInput("");
 
     try {
-      // Send user's message to FastAPI backend
-      const res = await axios.post("http://localhost:8000/chat", {
-        session_id: sessionId,
-        question: messageToSend,
-        include_dr_context: true,
+      const res = await fetch(`http://localhost:8000/api/v1/chat/${application}/query`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: input }), // ✅ FIXED to match backend
       });
 
-      // Append assistant response to history
-      const assistantMessage = {
-        role: "assistant",
-        content: res.data.answer,
-      };
-      setChatHistory((prev) => [...prev, assistantMessage]);
+      const data = await res.json();
+      const assistantMessage = { role: "assistant", content: data.answer };
+      setMessages([...updatedMessages, assistantMessage]);
     } catch (err) {
-      console.error("Chat error:", err.response?.data || err.message);
-
-      // Fallback message if backend fails
-      const errorMessage = {
-        role: "assistant",
-        content: "Sorry, I couldn't get a response. Please try again.",
-      };
-      setChatHistory((prev) => [...prev, errorMessage]);
+      setMessages([
+        ...updatedMessages,
+        { role: "assistant", content: "❌ Failed to get a response." },
+      ]);
     }
   };
 
-  // ------------------- Auto Scroll Chat Body -------------------
-  useEffect(() => {
-    if (chatBodyRef.current) {
-      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
-    }
-  }, [chatHistory]);
-
-  // ------------------- JSX Render -------------------
   return (
     <div className="chatbot-container">
+      {!isOpen && (
+        <button className="chat-toggle" onClick={() => setIsOpen(true)}>💬</button>
+      )}
       {isOpen && (
         <div className="chatbox">
-          {/* Chat header with title and close button */}
           <div className="chat-header">
-            <span>Ask your Query</span>
-            <button className="chat-close-btn" onClick={toggleChat}>
-              ✕
-            </button>
+            Chat Assistant
+            <button className="chat-close-btn" onClick={() => setIsOpen(false)}>×</button>
           </div>
 
-          {/* Chat history area */}
-          <div className="chat-body" ref={chatBodyRef}>
-            {chatHistory.map((msg, i) => (
+          <div className="chat-body">
+            {messages.map((msg, i) => (
               <div key={i} className={`chat-message ${msg.role}`}>
-                <strong>
-                  {msg.role === "user" ? "🧑 You: " : "🤖 Assistant: "}
-                </strong>
                 {msg.content}
               </div>
             ))}
           </div>
 
-          {/* Message input and send button */}
           <div className="chat-input-area">
             <textarea
-              rows={1}
               value={input}
-              placeholder="Ask something..."
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                // Send message on Enter (but allow Shift+Enter for new line)
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
+              placeholder="Ask a question..."
             />
-            <button onClick={handleSend}>➤</button>
+            <button onClick={handleSend}>Send</button>
           </div>
         </div>
       )}
-
-      {/* Floating button to open chatbox */}
-      {!isOpen && (
-        <button className="chat-toggle" onClick={toggleChat}>
-          💬
-        </button>
-      )}
     </div>
   );
-};
+}
 
 export default ChatBubble;
