@@ -1,5 +1,3 @@
-# in app/routers/chat.py
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from typing import List
