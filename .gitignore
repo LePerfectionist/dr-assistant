@@ -7,5 +7,6 @@ node_modules/
 **/build/
 *.db
 *Db.*
+backend/dr_app.db
 
 backend/app/runbooks_uploaded/
