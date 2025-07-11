@@ -7,7 +7,7 @@ import os
 from llama_index.core.query_engine import RouterQueryEngine
 from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.core.tools import QueryEngineTool
-from llama_index.core.selectors import LLMSelector
+from llama_index.core.selectors import PydanticSingleSelector
 from llama_index.core import SQLDatabase, VectorStoreIndex, StorageContext, load_index_from_storage
 from llama_index.llms.openai import OpenAI
 from llama_index.core.settings import Settings
@@ -73,9 +73,9 @@ def get_chat_query_engine(application_id: int):
     )
 
     # 3. --- Create the Router Agent ---
-    query_engine = RouterQueryEngine(
-        selector=LLMSelector.from_defaults(),
+    query_engine = RouterQueryEngine.from_defaults(
         query_engine_tools=[sql_tool, rag_tool],
+        selector=PydanticSingleSelector.from_defaults(),
     )
     
     query_engine_cache[application_id] = query_engine

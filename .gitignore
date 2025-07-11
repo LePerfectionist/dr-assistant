@@ -5,4 +5,7 @@ __pycache__
 node_modules/
 **/node_modules/
 **/build/
-.db
+*.db
+*Db.*
+
+backend/app/runbooks_uploaded/
