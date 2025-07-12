@@ -1,8 +1,8 @@
-
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
 
+# === SYSTEM ===
 
 class SystemBase(BaseModel):
     name: str
@@ -13,30 +13,48 @@ class SystemBase(BaseModel):
 class SystemResponse(SystemBase):
     id: int
     is_approved: bool
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
     source_reference: Optional[str]
 
     class Config:
-        orm_mode = True # Helps Pydantic read data from ORM objects
+        orm_mode = True
 
-# --- Runbook Schemas ---
+class SystemCreateAdmin(BaseModel):
+    name: str
+    dr_data: str
+    dependencies: List[str] = []
+    key_contacts: List[str] = []
+    source_reference: Optional[str] = "Manually created by admin"
+
+class SystemUpdate(BaseModel):
+    dr_data: str
+    dependencies: List[str]
+    source_reference: Optional[str] = None
+
+# === RUNBOOK ===
+
 class RunbookResponse(BaseModel):
     id: int
     filename: str
-    
+
     class Config:
         orm_mode = True
 
-# --- Application Schemas ---
+# === APPLICATION ===
+
 class ApplicationResponse(BaseModel):
     id: int
     user_id: int
     started_at: datetime
+    last_updated: datetime
     runbooks: List[RunbookResponse] = []
-    
+
     class Config:
         orm_mode = True
 
-# --- User Schemas ---
+# === USER ===
+
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -56,6 +74,7 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     password: Optional[str] = None
 
+# === CHAT ===
 
 class ChatRequest(BaseModel):
     query: str
@@ -65,10 +84,3 @@ class ChatResponse(BaseModel):
     source_reference: Optional[str] = None
     is_approved: Optional[bool] = None
     approved_at: Optional[datetime] = None
-
-class SystemCreateAdmin(BaseModel):
-    name: str
-    dr_data: str
-    dependencies: List[str] = []
-    key_contacts: List[str] = []
-    source_reference: Optional[str] = "Manually created by admin"

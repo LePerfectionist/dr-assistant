@@ -1,0 +1,68 @@
+/* MainApp.css */
+
+.main-app-container {
+  display: flex;
+  height: calc(100vh - 80px);
+  padding: 20px;
+  gap: 16px;
+  box-sizing: border-box;
+  background-color: #f3f4f6;
+}
+
+.upload-section {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  width: 260px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.detail-section {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+}
+.main-app-container {
+  display: flex;
+  height: 100vh;
+}
+
+.admin-view,
+.checker-view {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.detail-section {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+.chat-section {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
+
+.chat-section {
+  width: 300px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+}

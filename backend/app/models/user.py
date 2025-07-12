@@ -4,13 +4,12 @@ from typing import Optional, List
 
 from .application import Application
 
-
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     email: str
     password: str
-    role: str = "admin"
+    role: str = "admin"  # can be "admin" or "checker"
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

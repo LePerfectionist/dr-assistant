@@ -1,0 +1,75 @@
+.detail-panel {
+  padding: 16px;
+  border-left: 1px solid #ccc;
+  height: 100%;
+  overflow-y: auto;
+  background-color: #fff;
+  flex: 1;
+  transition: background-color 0.3s ease;
+}
+
+.detail-panel.editing {
+  background-color: #f9f9f9;
+}
+
+.detail-panel h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.detail-panel label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+  color: #444;
+}
+
+.detail-panel input,
+.detail-panel textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.detail-panel textarea {
+  resize: vertical;
+  font-family: monospace;
+}
+
+.detail-panel button {
+  margin-top: 10px;
+  margin-right: 8px;
+  padding: 8px 14px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.detail-panel button:hover {
+  background-color: #125ca1;
+}
+
+.detail-panel .action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.approved-badge {
+  margin-top: 12px;
+  background-color: #e6f4ea;
+  color: #155724;
+  padding: 8px 10px;
+  border-left: 4px solid #28a745;
+  font-size: 14px;
+  border-radius: 4px;
+  white-space: pre-line;
+}

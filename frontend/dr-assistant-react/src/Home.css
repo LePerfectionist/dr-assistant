@@ -1,0 +1,39 @@
+/* Home.css */
+.home-container {
+  padding: 40px;
+  text-align: center;
+}
+
+.home-container h2 {
+  margin-bottom: 30px;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 30px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.home-card {
+  background: #f7f9fb;
+  padding: 30px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.home-card small {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}

@@ -1,0 +1,75 @@
+.admin-dashboard {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+.admin-left-panel {
+  width: 280px;
+  background-color: #f3f4f6;
+  border-right: 1px solid #ccc;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.admin-left-panel h3 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #333;
+}
+
+.admin-app-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-app-list li {
+  padding: 10px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  background-color: #ffffff;
+  transition: background-color 0.2s;
+}
+
+.admin-app-list li:hover {
+  background-color: #e5e7eb;
+}
+
+.admin-app-list li.selected {
+  background-color: #2563eb;
+  color: white;
+}
+
+.admin-right-panel {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.admin-system-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-system-list li {
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: #f9fafb;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-system-list li:hover {
+  background-color: #eef2f7;
+}
+
+.admin-system-list li .tick {
+  float: right;
+  color: green;
+  font-weight: bold;
+}

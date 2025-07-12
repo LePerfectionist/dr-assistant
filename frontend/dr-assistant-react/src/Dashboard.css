@@ -1,0 +1,52 @@
+/* Dashboard.css */
+.dashboard-container {
+  display: flex;
+  gap: 24px;
+  padding: 20px;
+}
+
+.app-list, .system-list {
+  width: 45%;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 14px;
+  border-radius: 8px;
+}
+
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+li {
+  padding: 8px 12px;
+  margin: 6px 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+li.selected {
+  background: #e1f5fe;
+  font-weight: bold;
+}
+
+li .badge {
+  display: block;
+  font-size: 12px;
+  color: green;
+}
+
+button {
+  margin-left: 10px;
+  padding: 4px 8px;
+  border: none;
+  cursor: pointer;
+  background: #eee;
+  border-radius: 4px;
+}
+
+.delete-btn {
+  color: red;
+}
