@@ -8,6 +8,7 @@ from app.models.application import Application
 from app.models.system import System
 from app.models.runbook import RunbookDocument
 from app.schema import UserResponse, UserUpdate, SystemCreateAdmin, SystemResponse
+
 from app.routers.auth import get_current_user, get_password_hash
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -68,7 +69,16 @@ def delete_application(
     app_to_delete = session.get(Application, app_id)
     if not app_to_delete:
         raise HTTPException(status_code=404, detail="Application not found")
-    
+
+    # ❗ Delete associated systems
+    for system in app_to_delete.systems:
+        session.delete(system)
+
+    # ❗ Delete associated runbooks
+    for runbook in app_to_delete.runbooks:
+        session.delete(runbook)
+
+    # ✅ Delete the application itself
     session.delete(app_to_delete)
     session.commit()
     return {"ok": True}

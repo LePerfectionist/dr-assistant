@@ -1,0 +1,134 @@
+.my-applications {
+  padding: 20px;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #f7f9fb;
+  min-height: 100vh;
+}
+
+.my-applications h2 {
+  margin-bottom: 16px;
+  color: #2c3e50;
+}
+
+.applications-layout {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+}
+
+/* Panels (Left, Middle, Right) */
+.my-applications .left-panel,
+.my-applications .middle-panel,
+.my-applications .right-panel {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  user-select: none;
+}
+
+.left-panel {
+  min-width: 250px;
+}
+.middle-panel {
+  min-width: 300px;
+}
+.right-panel {
+  min-width: 400px;
+}
+
+/* Remove all focus/active blue effects */
+.my-applications *:focus,
+.my-applications *:active {
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: inherit !important;
+}
+
+/* Remove transitions */
+.my-applications * {
+  transition: none !important;
+}
+
+/* Application header block */
+.app-header {
+  background-color: #e5edf4;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.approval-meta {
+  font-size: 0.9em;
+  color: #2e8b57;
+  margin-top: 10px;
+}
+
+/* System Card */
+.system-card {
+  background: #fcfcfc;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.system-card.selected {
+  border-color: #0099cc;
+  background-color: #e9f8ff;
+}
+
+.system-card:hover {
+  background-color: #f4f9fb;
+}
+
+/* Status */
+.approved {
+  color: #2e8b57;
+  font-size: 0.9em;
+}
+.pending {
+  color: #d9534f;
+  font-size: 0.9em;
+}
+
+/* System Detail Styling */
+.system-detail-panel label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.system-detail-panel textarea,
+.system-detail-panel input {
+  width: 100%;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fdfdfd;
+  box-sizing: border-box;
+}
+
+.system-detail-panel button {
+  margin-right: 10px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+
+.system-detail-panel button:last-of-type {
+  background-color: #f0ad4e;
+  color: white;
+}
+

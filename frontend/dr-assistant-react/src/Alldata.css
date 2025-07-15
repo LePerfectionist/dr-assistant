@@ -1,0 +1,43 @@
+/* src/Dashboard.css */
+.dashboard-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.app-list, .system-list, .detail-section {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.app-list ul, .system-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.app-list li, .system-list li {
+  cursor: pointer;
+  padding: 6px;
+  margin-bottom: 5px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.app-list li:hover, .system-list li:hover {
+  background-color: #e6f7ff;
+}
+
+.summary-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  background-color: #e8f0fe;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+}
