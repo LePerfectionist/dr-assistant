@@ -5,11 +5,14 @@ from datetime import datetime
 # --- Configuration ---
 # List of folders you want to zip.
 # The script assumes these folders are in the same directory as the script itself.
-FOLDERS_TO_ZIP = ["backend\\app", "frontend\\dr-assistant-react\\src"] 
+FOLDERS_TO_ZIP = {
+    "app" : "backend\\app",
+    "src": "frontend\\dr-assistant-react\\src"
+} 
 
 # The folder where you want to save the final zip files.
 # This folder will be created if it doesn't exist.
-DESTINATION_FOLDER = "C:\Users\meafigmaadmin\Projects\dr-assistant-zips"
+DESTINATION_FOLDER = "C:\\Users\\meafigmaadmin\\Projects\\dr-assistant-zips"
 
 # --- Main Script Logic ---
 def zip_project_folders():
@@ -31,8 +34,8 @@ def zip_project_folders():
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # 3. Loop through each folder and create a zip file for it
-    for folder_name in FOLDERS_TO_ZIP:
-        source_path = os.path.abspath(folder_name)
+    for folder_name, folder_path in FOLDERS_TO_ZIP.items():
+        source_path = os.path.abspath(folder_path)
         
         # Check if the source folder actually exists
         if not os.path.isdir(source_path):

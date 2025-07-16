@@ -80,7 +80,8 @@ def extract_dr_systems(
                 system_to_create = System(
                     name=parsed_data.get("system_name", "Unknown System"),
                     dr_data=parsed_data.get("dr_data", ""),
-                    dependencies=parsed_data.get("dependencies", []),
+                    upstream_dependencies=parsed_data.get("upstream_dependencies", []),
+                    downstream_dependencies=parsed_data.get("downstream_dependencies", []),
                     key_contacts=parsed_data.get("key_contacts", []),
                     application_id=application_id,
                     source_reference=f"File: {runbook.filename}, Page Number: {node.metadata['page_number']}, Section near text: '{node.text[:25]}...'"
