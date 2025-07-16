@@ -1,102 +1,177 @@
-/* Dashboard.css */
-
 .dashboard-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
   padding: 20px;
-  font-family: Arial, sans-serif;
   max-width: 1200px;
   margin: auto;
+  font-family: "Segoe UI", sans-serif;
 }
 
-h2 {
-  font-size: 1.4em;
-  margin-bottom: 10px;
+h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+/* Summary cards */
+.summary-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-cards .card {
+  flex: 1;
+  background: #f9f9f9;
+  padding: 16px;
+  border-radius: 8px;
+  font-weight: 500;
   color: #333;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #ddd;
 }
 
-/* 📂 Table styling */
+/* Tabs */
+.dashboard-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.dashboard-tabs button {
+  padding: 10px 20px;
+  font-size: 14px;
+  border: none;
+  background-color: #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dashboard-tabs .active-tab {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Filters */
+.dashboard-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.dashboard-filters input,
+.dashboard-filters select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.dashboard-filters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Tables */
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: white;
+  margin-bottom: 20px;
   border-radius: 8px;
   overflow: hidden;
+  font-size: 14px;
 }
 
 th,
 td {
   padding: 12px;
-  border-bottom: 1px solid #eee;
   text-align: left;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 th {
-  background-color: #f5f5f5;
-  color: #444;
+  background-color: #f8f8f8;
+  color: #333;
 }
 
 tr:hover {
   background-color: #f9f9f9;
 }
 
+/* Button styles */
 td button {
-  margin-right: 6px;
   padding: 6px 10px;
-  font-size: 13px;
-  cursor: pointer;
+  margin-right: 6px;
   border: none;
-  background: #007bff;
-  color: white;
   border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+td button:first-child {
+  background-color: #007bff; 
+  color: #ffffff;
+}
+
+td button:first-child:hover {
+  background-color: #c4c4c4;
+}
+
+td button:nth-child(2) {
+  background-color: #66c576; /* soft blue for Approve */
+  color: #eaecee;
+}
+
+td button:nth-child(2):hover {
+  background-color: #99ccff;
 }
 
 td button:last-child {
-  background: #dc3545;
+  background-color: rgb(46, 204, 113);/* soft red for Delete */
+  color: #ffffff;
 }
 
-.badge {
-  background-color: #e0f7e9;
-  color: #2e7d32;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 13px;
-  display: inline-block;
+td button:last-child:hover {
+  background-color: #74e769;
 }
 
-.system-detail-panel {
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 16px;
-  border-radius: 8px;
-  margin-top: 20px;
+/* No data fallback */
+.no-data {
+  text-align: center;
+  color: #777;
+  padding: 20px;
 }
 
-textarea,
-input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
 }
 
-button {
-  margin-right: 10px;
+.pagination button {
   padding: 6px 12px;
-  font-size: 14px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  background: #f1f1f1;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-.approved-badge {
-  background-color: #d7f5e9;
-  padding: 8px;
-  border: 1px solid #2ecc71;
-  margin-top: 10px;
-  border-radius: 4px;
-  font-size: 13px;
+.pagination .active-page {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Chart section */
+.chart-section {
+  margin-top: 30px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #eee;
 }
