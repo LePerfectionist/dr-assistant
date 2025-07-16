@@ -6,14 +6,16 @@ import os
 # --- LlamaIndex Imports ---
 from llama_index.core.query_engine import RouterQueryEngine
 from llama_index.core.query_engine import NLSQLTableQueryEngine
+from llama_index.core import KnowledgeGraphIndex
+from llama_index.core.graph_stores import SimpleGraphStore
 from llama_index.core.tools import QueryEngineTool
 from llama_index.core.selectors import PydanticSingleSelector
 from llama_index.core import SQLDatabase, VectorStoreIndex, StorageContext, load_index_from_storage
 from llama_index.llms.openai import OpenAI
 from llama_index.core.settings import Settings
 
-# --- Your App Imports ---
-from app.database import get_session, engine # We need the main engine object
+
+from app.database import get_session, engine
 from app.models.application import Application
 from app.models.user import User
 from app.schema import ChatRequest, ChatResponse
@@ -104,4 +106,54 @@ def chat_with_application(
     
     # The agent's response is in response.response
     # The source nodes can be inspected via response.source_nodes
+    return ChatResponse(answer=str(response))
+
+
+
+
+# ... (other code)
+
+@router.post("/{application_id}/graph-query", response_model=ChatResponse)
+def chat_with_graph(
+    application_id: int,
+    request: ChatRequest,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Answers questions about system dependencies by querying a knowledge graph.
+    """
+    application = session.get(Application, application_id)
+    if not application or application.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Application not found or access denied.")
+
+    # 1. Dynamically build knowledge graph triplets from the database
+    kg_triplets = []
+    for system in application.systems:
+        for dep in system.upstream_dependencies:
+            # Format: (Subject, Predicate, Object)
+            kg_triplets.append((system.name, "depends on", dep))
+        for dep in system.downstream_dependencies:
+            kg_triplets.append((dep, "is a dependency for", system.name))
+        
+        # Add approval status as a fact
+        status = "is approved" if system.is_approved else "is not approved"
+        kg_triplets.append((system.name, "approval status", status))
+
+    if not kg_triplets:
+        return ChatResponse(answer="No dependency information available to build a knowledge graph.")
+
+    # 2. Create an in-memory knowledge graph for the query
+    graph_store = SimpleGraphStore()
+    graph_store.upsert_triplets(kg_triplets)
+    
+    index = KnowledgeGraphIndex.from_existing(
+        graph_store=graph_store,
+        # You can provide schema and other options to improve accuracy
+    )
+
+    # 3. Query the graph
+    query_engine = index.as_query_engine(include_text=False) # We only want to query the graph structure
+    response = query_engine.query(request.query)
+
     return ChatResponse(answer=str(response))

@@ -28,7 +28,8 @@ class System(SQLModel, table=True):
     name: str
     dr_data: str
 
-    dependencies: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    upstream_dependencies: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    downstream_dependencies: List[str] = Field(default_factory=list, sa_column=Column(JSON))
     key_contacts: List[str] = Field(default_factory=list, sa_column=Column(JSON))
 
     is_approved: bool = False

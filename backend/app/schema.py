@@ -7,7 +7,8 @@ from datetime import datetime
 class SystemBase(BaseModel):
     name: str
     dr_data: str
-    dependencies: List[str]
+    upstream_dependencies: List[str]
+    downstream_dependencies: List[str]
     key_contacts: List[str]
 
 class SystemResponse(SystemBase):
@@ -23,13 +24,15 @@ class SystemResponse(SystemBase):
 class SystemCreateAdmin(BaseModel):
     name: str
     dr_data: str
-    dependencies: List[str] = []
+    upstream_dependencies: List[str]
+    downstream_dependencies: List[str]
     key_contacts: List[str] = []
     source_reference: Optional[str] = "Manually created by admin"
 
 class SystemUpdate(BaseModel):
     dr_data: str
-    dependencies: List[str]
+    upstream_dependencies: List[str]
+    downstream_dependencies: List[str]
     source_reference: Optional[str] = None
 
 # === RUNBOOK ===

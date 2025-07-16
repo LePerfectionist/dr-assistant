@@ -6,17 +6,18 @@ some of which have sections on DR Steps
 **YOUR TASK:**
 Given the following runbook section chunk/node, tell me:
 1. Whether this contains DR-related steps (yes/no)
-2. If yes, extract the system name, DR strategy/steps, any mentioned dependencies, and any mentioned key contacts
+2. If yes, extract the system name, DR strategy/steps, any mentioned upstream and downstream dependencies, and any mentioned key contacts
 
 Return in JSON:
 {{
   "is_dr_section": true/false,
   "system_name": "...",
   "dr_data": "...",
-  "dependencies": [...],
+  "upstream_dependencies": [...],
+  "downstream_dependencies": [...],
   "key_contacts": [...]
 }}
 
 
-Text:`
+Text:
 {text}
