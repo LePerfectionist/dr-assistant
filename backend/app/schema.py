@@ -33,6 +33,7 @@ class SystemUpdate(BaseModel):
     dr_data: str
     upstream_dependencies: List[str]
     downstream_dependencies: List[str]
+    key_contacts: List[str]  
     source_reference: Optional[str] = None
 
 # === RUNBOOK ===

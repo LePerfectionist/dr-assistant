@@ -43,7 +43,7 @@ def update_system(
         raise HTTPException(status_code=404, detail="System not found.")
 
     system.dr_data = update.dr_data
-    system.upstrem_dependencies = update.upstream_dependencies
+    system.upstream_dependencies = update.upstream_dependencies
     system.downstream_dependencies = update.downstream_dependencies
     system.source_reference = update.source_reference
 
