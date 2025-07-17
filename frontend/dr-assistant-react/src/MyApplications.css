@@ -1,134 +1,176 @@
 .my-applications {
   padding: 20px;
   font-family: "Segoe UI", sans-serif;
-  background-color: #f7f9fb;
-  min-height: 100vh;
+  background-color: #f5f7fa;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .my-applications h2 {
   margin-bottom: 16px;
-  color: #2c3e50;
+  color: #1f2937;
 }
 
 .applications-layout {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   overflow-x: auto;
+  height: calc(100vh - 80px);
 }
 
-/* Panels (Left, Middle, Right) */
-.my-applications .left-panel,
-.my-applications .middle-panel,
-.my-applications .right-panel {
+/* Panels */
+.left-panel,
+.middle-panel,
+.right-panel {
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
-  user-select: none;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  overflow-y: auto;
+  height: 100%;
 }
 
 .left-panel {
-  min-width: 250px;
+  min-width: 260px;
+  max-width: 300px;
+  flex-shrink: 0;
 }
+
 .middle-panel {
-  min-width: 300px;
+  flex-grow: 1;
+  min-width: 350px;
+  max-width: 500px;
 }
+
 .right-panel {
+  flex-grow: 1;
   min-width: 400px;
 }
 
-/* Remove all focus/active blue effects */
-.my-applications *:focus,
-.my-applications *:active {
-  outline: none !important;
-  box-shadow: none !important;
-  background-color: inherit !important;
-}
-
-/* Remove transitions */
-.my-applications * {
-  transition: none !important;
-}
-
-/* Application header block */
+/* Header block */
 .app-header {
-  background-color: #e5edf4;
-  padding: 10px 12px;
+  background-color: #e3ecf6;
+  padding: 10px 14px;
   border-radius: 8px;
   margin-bottom: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #1e3a8a;
   cursor: pointer;
-}
-.approval-meta {
-  font-size: 0.9em;
-  color: #2e8b57;
-  margin-top: 10px;
 }
 
 /* System Card */
 .system-card {
-  background: #fcfcfc;
-  border: 1px solid #dcdcdc;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 10px;
   cursor: pointer;
-}
-
-.system-card.selected {
-  border-color: #0099cc;
-  background-color: #e9f8ff;
+  transition: background-color 0.2s;
 }
 
 .system-card:hover {
-  background-color: #f4f9fb;
+  background-color: #f1f5f9;
 }
 
-/* Status */
+.system-card.selected {
+  border-color: #2563eb;
+  background-color: #e0f2fe;
+}
+
+/* Approval Status */
 .approved {
-  color: #2e8b57;
-  font-size: 0.9em;
+  color: #16a34a;
+  font-size: 0.85em;
+  font-weight: 500;
 }
 .pending {
-  color: #d9534f;
-  font-size: 0.9em;
+  color: #dc2626;
+  font-size: 0.85em;
+  font-weight: 500;
 }
 
-/* System Detail Styling */
+/* System Detail */
 .system-detail-panel label {
   display: block;
-  margin-top: 12px;
+  margin-top: 14px;
   font-weight: 600;
-  color: #333;
+  color: #374151;
 }
 
-.system-detail-panel textarea,
-.system-detail-panel input {
+.system-detail-panel input,
+.system-detail-panel textarea {
   width: 100%;
-  margin-top: 6px;
-  margin-bottom: 12px;
   padding: 10px;
+  margin-top: 6px;
+  margin-bottom: 16px;
   font-family: monospace;
   font-size: 14px;
-  border: 1px solid #ccc;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  background-color: #fdfdfd;
-  box-sizing: border-box;
+  background-color: #f9fafb;
 }
 
 .system-detail-panel button {
   margin-right: 10px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border: none;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  background-color: #2563eb;
+  color: white;
+  transition: background-color 0.2s;
 }
 
-
+.system-detail-panel button:hover {
+  background-color: #1d4ed8;
+}
 
 .system-detail-panel button:last-of-type {
-  background-color: #f0ad4e;
-  color: white;
+  background-color: #30b32c;
+}
+.system-card.selected {
+  border-left: 4px solid #2563eb;
+  background: linear-gradient(to right, #e0f2fe, #f8fafc);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.system-card .system-name {
+  font-weight: 700;
+  font-size: 1.05em;
+  margin-bottom: 4px;
+  color: #1e3a8a;
+}
+
+.system-card .system-meta {
+  font-size: 0.85em;
+  color: #6b7280;
+}
+
+.approved::before {
+  content: "✔️ ";
+  color: #16a34a;
+}
+.pending::before {
+  content: "⚠️ ";
+  color: #dc2626;
+}
+
+.system-detail-panel label {
+  font-size: 0.95em;
+  margin-bottom: 4px;
+}
+
+.system-detail-panel input,
+.system-detail-panel textarea {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.system-detail-panel input:focus,
+.system-detail-panel textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
 }
 
