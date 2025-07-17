@@ -10,3 +10,4 @@ node_modules/
 backend/dr_app.db
 
 backend/app/runbooks_uploaded/
+backend/lib
