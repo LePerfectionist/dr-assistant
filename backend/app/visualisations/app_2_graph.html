@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 900px;
+                 background-color: #222222;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "grey", "font": {"color": "white"}, "id": "", "label": "", "shape": "dot", "size": 22.407407407407405, "title": "External Dependency: "}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "Monitoring System", "label": "Monitoring System", "shape": "dot", "size": 29.814814814814813, "title": "System: Monitoring System\nStatus: Not Approved"}, {"color": "orangered", "font": {"color": "white"}, "id": "Storage System", "label": "Storage System", "shape": "dot", "size": 18.703703703703702, "title": "System: Storage System\nStatus: Not Approved"}, {"color": "grey", "font": {"color": "white"}, "id": "CRM System", "label": "CRM System", "shape": "dot", "size": 26.11111111111111, "title": "External Dependency: CRM System"}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "Email System", "label": "Email System", "shape": "dot", "size": 26.11111111111111, "title": "System: Email System\nStatus: Not Approved"}, {"color": "orangered", "font": {"color": "white"}, "id": "VPN Gateway", "label": "VPN Gateway", "shape": "dot", "size": 15.0, "title": "System: VPN Gateway\nStatus: Not Approved"}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "Web Server", "label": "Web Server", "shape": "dot", "size": 26.11111111111111, "title": "System: Web Server\nStatus: Not Approved"}, {"color": "grey", "font": {"color": "white"}, "id": "Business Intelligence Tools", "label": "Business Intelligence Tools", "shape": "dot", "size": 18.703703703703702, "title": "External Dependency: Business Intelligence Tools"}, {"color": "grey", "font": {"color": "white"}, "id": "Secure Remote Access", "label": "Secure Remote Access", "shape": "dot", "size": 18.703703703703702, "title": "External Dependency: Secure Remote Access"}, {"color": "orangered", "font": {"color": "white"}, "id": "ATM Switch", "label": "ATM Switch", "shape": "dot", "size": 22.407407407407405, "title": "System: ATM Switch\nStatus: Not Approved"}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "App Server", "label": "App Server", "shape": "dot", "size": 33.51851851851852, "title": "System: App Server\nStatus: Not Approved"}, {"color": "grey", "font": {"color": "white"}, "id": "DNS", "label": "DNS", "shape": "dot", "size": 22.407407407407405, "title": "External Dependency: DNS"}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "Payment Gateway", "label": "Payment Gateway", "shape": "dot", "size": 37.22222222222222, "title": "System: Payment Gateway\nStatus: Not Approved"}, {"color": "grey", "font": {"color": "white"}, "id": "Internal Communication Systems", "label": "Internal Communication Systems", "shape": "dot", "size": 18.703703703703702, "title": "External Dependency: Internal Communication Systems"}, {"color": "grey", "font": {"color": "white"}, "id": "Reporting System", "label": "Reporting System", "shape": "dot", "size": 18.703703703703702, "title": "External Dependency: Reporting System"}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Internet Banking", "label": "Internet Banking", "shape": "dot", "size": 37.22222222222222, "title": "System: Internet Banking\nStatus: Approved"}, {"color": "orangered", "font": {"color": "white"}, "id": "Network Switch", "label": "Network Switch", "shape": "dot", "size": 33.51851851851852, "title": "System: Network Switch\nStatus: Not Approved"}, {"color": "orangered", "font": {"color": "white"}, "id": "UNIX", "label": "UNIX", "shape": "dot", "size": 15.0, "title": "System: UNIX\nStatus: Not Approved"}, {"color": "orangered", "font": {"color": "white"}, "id": "Oracle DB", "label": "Oracle DB", "shape": "dot", "size": 15.0, "title": "System: Oracle DB\nStatus: Not Approved"}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "Database", "label": "Database", "shape": "dot", "size": 22.407407407407405, "title": "System: Database\nStatus: Not Approved"}, {"color": "orangered", "font": {"color": "white"}, "id": "Load Balancer", "label": "Load Balancer", "shape": "dot", "size": 26.11111111111111, "title": "System: Load Balancer\nStatus: Not Approved"}, {"color": "orangered", "font": {"color": "white"}, "id": "General DR Drill", "label": "General DR Drill", "shape": "dot", "size": 15.0, "title": "System: General DR Drill\nStatus: Not Approved"}, {"color": "grey", "font": {"color": "white"}, "id": "Document Management", "label": "Document Management", "shape": "dot", "size": 18.703703703703702, "title": "External Dependency: Document Management"}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "Cloud Service", "label": "Cloud Service", "shape": "dot", "size": 22.407407407407405, "title": "System: Cloud Service\nStatus: Not Approved"}, {"color": "grey", "font": {"color": "white"}, "id": "Mobile Banking", "label": "Mobile Banking", "shape": "dot", "size": 22.407407407407405, "title": "External Dependency: Mobile Banking"}, {"color": "#ff7f50", "font": {"color": "white"}, "id": "Firewall", "label": "Firewall", "shape": "dot", "size": 44.629629629629626, "title": "System: Firewall\nStatus: Not Approved"}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Core Banking", "label": "Core Banking", "shape": "dot", "size": 33.51851851851852, "title": "System: Core Banking\nStatus: Approved"}, {"color": "grey", "font": {"color": "white"}, "id": "Loan Origination", "label": "Loan Origination", "shape": "dot", "size": 18.703703703703702, "title": "External Dependency: Loan Origination"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "", "to": "Core Banking"}, {"arrows": "to", "from": "Monitoring System", "to": "Internet Banking"}, {"arrows": "to", "from": "Monitoring System", "to": "App Server"}, {"arrows": "to", "from": "Monitoring System", "to": "Payment Gateway"}, {"arrows": "to", "from": "Storage System", "to": "Firewall"}, {"arrows": "to", "from": "Email System", "to": "Internal Communication Systems"}, {"arrows": "to", "from": "Web Server", "to": "Business Intelligence Tools"}, {"arrows": "to", "from": "Web Server", "to": "App Server"}, {"arrows": "to", "from": "App Server", "to": "Mobile Banking"}, {"arrows": "to", "from": "App Server", "to": "CRM System"}, {"arrows": "to", "from": "DNS", "to": "Internet Banking"}, {"arrows": "to", "from": "DNS", "to": "Email System"}, {"arrows": "to", "from": "Payment Gateway", "to": "Core Banking"}, {"arrows": "to", "from": "Payment Gateway", "to": "ATM Switch"}, {"arrows": "to", "from": "Internet Banking", "to": "Mobile Banking"}, {"arrows": "to", "from": "Internet Banking", "to": "Email System"}, {"arrows": "to", "from": "Network Switch", "to": "Payment Gateway"}, {"arrows": "to", "from": "Network Switch", "to": "Database"}, {"arrows": "to", "from": "Network Switch", "to": "Document Management"}, {"arrows": "to", "from": "Network Switch", "to": "CRM System"}, {"arrows": "to", "from": "Network Switch", "to": "Cloud Service"}, {"arrows": "to", "from": "Database", "to": "Web Server"}, {"arrows": "to", "from": "Load Balancer", "to": "Internet Banking"}, {"arrows": "to", "from": "Load Balancer", "to": "Payment Gateway"}, {"arrows": "to", "from": "Load Balancer", "to": "App Server"}, {"arrows": "to", "from": "Cloud Service", "to": "Secure Remote Access"}, {"arrows": "to", "from": "Firewall", "to": "Internet Banking"}, {"arrows": "to", "from": "Firewall", "to": "Payment Gateway"}, {"arrows": "to", "from": "Firewall", "to": "Core Banking"}, {"arrows": "to", "from": "Firewall", "to": "Loan Origination"}, {"arrows": "to", "from": "Firewall", "to": "CRM System"}, {"arrows": "to", "from": "Firewall", "to": "Reporting System"}, {"arrows": "to", "from": "Firewall", "to": "Monitoring System"}, {"arrows": "to", "from": "Core Banking", "to": ""}, {"arrows": "to", "from": "Core Banking", "to": "ATM Switch"}, {"arrows": "to", "from": "", "to": "Core Banking", "width": 1}, {"arrows": "to", "from": "Monitoring System", "to": "Internet Banking", "width": 1}, {"arrows": "to", "from": "Monitoring System", "to": "App Server", "width": 1}, {"arrows": "to", "from": "Monitoring System", "to": "Payment Gateway", "width": 1}, {"arrows": "to", "from": "Storage System", "to": "Firewall", "width": 1}, {"arrows": "to", "from": "Email System", "to": "Internal Communication Systems", "width": 1}, {"arrows": "to", "from": "Web Server", "to": "Business Intelligence Tools", "width": 1}, {"arrows": "to", "from": "Web Server", "to": "App Server", "width": 1}, {"arrows": "to", "from": "App Server", "to": "Mobile Banking", "width": 1}, {"arrows": "to", "from": "App Server", "to": "CRM System", "width": 1}, {"arrows": "to", "from": "DNS", "to": "Internet Banking", "width": 1}, {"arrows": "to", "from": "DNS", "to": "Email System", "width": 1}, {"arrows": "to", "from": "Payment Gateway", "to": "Core Banking", "width": 1}, {"arrows": "to", "from": "Payment Gateway", "to": "ATM Switch", "width": 1}, {"arrows": "to", "from": "Internet Banking", "to": "Mobile Banking", "width": 1}, {"arrows": "to", "from": "Internet Banking", "to": "Email System", "width": 1}, {"arrows": "to", "from": "Network Switch", "to": "Payment Gateway", "width": 1}, {"arrows": "to", "from": "Network Switch", "to": "Database", "width": 1}, {"arrows": "to", "from": "Network Switch", "to": "Document Management", "width": 1}, {"arrows": "to", "from": "Network Switch", "to": "CRM System", "width": 1}, {"arrows": "to", "from": "Network Switch", "to": "Cloud Service", "width": 1}, {"arrows": "to", "from": "Database", "to": "Web Server", "width": 1}, {"arrows": "to", "from": "Load Balancer", "to": "Internet Banking", "width": 1}, {"arrows": "to", "from": "Load Balancer", "to": "Payment Gateway", "width": 1}, {"arrows": "to", "from": "Load Balancer", "to": "App Server", "width": 1}, {"arrows": "to", "from": "Cloud Service", "to": "Secure Remote Access", "width": 1}, {"arrows": "to", "from": "Firewall", "to": "Internet Banking", "width": 1}, {"arrows": "to", "from": "Firewall", "to": "Payment Gateway", "width": 1}, {"arrows": "to", "from": "Firewall", "to": "Core Banking", "width": 1}, {"arrows": "to", "from": "Firewall", "to": "Loan Origination", "width": 1}, {"arrows": "to", "from": "Firewall", "to": "CRM System", "width": 1}, {"arrows": "to", "from": "Firewall", "to": "Reporting System", "width": 1}, {"arrows": "to", "from": "Firewall", "to": "Monitoring System", "width": 1}, {"arrows": "to", "from": "Core Banking", "to": "", "width": 1}, {"arrows": "to", "from": "Core Banking", "to": "ATM Switch", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"hierarchicalRepulsion": {"centralGravity": 0.0, "springLength": 200, "springConstant": 0.01, "nodeDistance": 200, "damping": 0.2}, "minVelocity": 0.75, "solver": "hierarchicalRepulsion"}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

@@ -4,6 +4,7 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import Home from "./Home";
 import Dashboard from "./Dashboard";
+import AnalysisPage from "./AnalysisPage";
 import MainApp from "./MainApp";
 import MyApplications from "./MyApplications";
 import "./App.css";
@@ -11,11 +12,14 @@ import "./App.css";
 function AppContent() {
   const { user, logout } = useAuth();
   const [view, setView] = useState("home");
-  const [resetKey, setResetKey] = useState(Date.now()); // Used to reset MainApp
+  const [currentAppId, setCurrentAppId] = useState(null); // <-- Add state for the ID
+  const [resetKey, setResetKey] = useState(Date.now());
 
-  const switchView = (newView) => {
+  // Update switchView to handle passing an ID
+  const switchView = (newView, id = null) => {
     setView(newView);
-    setResetKey(Date.now()); // Force unmount/mount to reset components
+    setCurrentAppId(id); // Set the ID when switching
+    setResetKey(Date.now()); 
   };
 
   if (!user) {
@@ -50,13 +54,19 @@ function AppContent() {
         </div>
       </header>
 
-      {view === "home" && <Home setView={setView} />}
+      {view === "home" && <Home setView={switchView} />}
       {view === "main" && <MainApp key={resetKey} />}
-      {view === "myapps" && <MyApplications />}
+      {/* Pass the switchView function to MyApplications so it can navigate */}
+      {view === "myapps" && <MyApplications setView={switchView} />}
       {view === "dashboard" && <Dashboard />}
+      {/* Add the new view to the router logic */}
+      {view === "analysis" && (
+        <AnalysisPage applicationId={currentAppId} setView={switchView} />
+      )}
     </div>
   );
 }
+
 
 export default function App() {
   return (

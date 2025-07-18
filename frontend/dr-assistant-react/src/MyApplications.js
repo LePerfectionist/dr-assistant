@@ -3,8 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import ReactMarkdown from "react-markdown";
 import "./MyApplications.css";
+import apiClient from './apiClient';
 
-function MyApplications() {
+function MyApplications( { setView }) {
   const { user, token } = useAuth();
   const [applications, setApplications] = useState([]);
   const [expandedAppId, setExpandedAppId] = useState(null);
@@ -139,7 +140,15 @@ function MyApplications() {
         {/* Middle Panel: Systems */}
         {expandedAppId && systemsMap[expandedAppId] && (
           <div className="middle-panel">
-            <h3>Systems</h3>
+            <div className="panel-header">
+              <h3>Systems</h3>
+              <button
+                className="view-graph-button"
+                onClick={() => setView('analysis', expandedAppId)}
+              >
+                View Dependency Graph 📈
+              </button>
+            </div>
             {systemsMap[expandedAppId].map((sys) => (
               <div
                 key={sys.id}

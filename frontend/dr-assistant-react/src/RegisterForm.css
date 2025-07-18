@@ -71,3 +71,31 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.panel-header h3 {
+  margin: 0;
+}
+
+.view-graph-button {
+  background-color: #28a745; /* A nice green color */
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.view-graph-button:hover {
+  background-color: #218838;
+}
