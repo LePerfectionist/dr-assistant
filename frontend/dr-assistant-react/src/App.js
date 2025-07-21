@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth, AuthProvider } from "./AuthContext";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
@@ -12,14 +12,20 @@ import "./App.css";
 function AppContent() {
   const { user, logout } = useAuth();
   const [view, setView] = useState("home");
-  const [currentAppId, setCurrentAppId] = useState(null); // <-- Add state for the ID
+  const [currentAppId, setCurrentAppId] = useState(null);
   const [resetKey, setResetKey] = useState(Date.now());
 
-  // Update switchView to handle passing an ID
+  // Automatically go to Home view after login
+  useEffect(() => {
+    if (user && view !== "home") {
+      setView("home");
+    }
+  }, [user]);
+
   const switchView = (newView, id = null) => {
     setView(newView);
-    setCurrentAppId(id); // Set the ID when switching
-    setResetKey(Date.now()); 
+    setCurrentAppId(id);
+    setResetKey(Date.now()); // Used to reset MainApp if needed
   };
 
   if (!user) {
@@ -56,17 +62,14 @@ function AppContent() {
 
       {view === "home" && <Home setView={switchView} />}
       {view === "main" && <MainApp key={resetKey} />}
-      {/* Pass the switchView function to MyApplications so it can navigate */}
       {view === "myapps" && <MyApplications setView={switchView} />}
       {view === "dashboard" && <Dashboard />}
-      {/* Add the new view to the router logic */}
       {view === "analysis" && (
         <AnalysisPage applicationId={currentAppId} setView={switchView} />
       )}
     </div>
   );
 }
-
 
 export default function App() {
   return (

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .routers import api_router
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from dotenv import load_dotenv
 from .database import init_db
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import "./SystemDetail.css";
@@ -11,6 +10,7 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
     downstream_dependencies: "",
     key_contacts: "",
     source_reference: "",
+    system_type: "internal",
   });
 
   useEffect(() => {
@@ -21,6 +21,7 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
         downstream_dependencies: system.downstream_dependencies?.join(", ") || "",
         key_contacts: system.key_contacts?.join(", ") || "",
         source_reference: system.source_reference || "",
+        system_type: system.system_type || "internal",
       });
     }
   }, [system]);
@@ -61,6 +62,7 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
           downstream_dependencies: editedData.downstream_dependencies.split(",").map((d) => d.trim()),
           key_contacts: editedData.key_contacts.split(",").map((d) => d.trim()),
           source_reference: editedData.source_reference,
+          system_type: editedData.system_type,
         }),
       });
 
@@ -68,7 +70,7 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
         const updated = await res.json();
         alert("System updated successfully!");
         setEditMode(false);
-        onUpdate && onUpdate(updated); // 🔁 notify parent
+        onUpdate && onUpdate(updated);
       } else {
         alert("Failed to update system.");
       }
@@ -87,21 +89,21 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
     if (!confirm) return;
 
     try {
-      const res = await fetch(
+      const url =
         user.role === "admin"
           ? `http://localhost:8000/api/v1/admin/systems/${system.id}/approve`
-          : `http://localhost:8000/api/v1/validation/systems/${system.id}/approve`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      );
+          : `http://localhost:8000/api/v1/validation/systems/${system.id}/approve`;
+
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
 
       if (res.ok) {
         alert("System approved!");
-        onApprove && onApprove(system.id); // 🔁 notify parent
+        onApprove && onApprove(system.id);
       } else {
         alert("Approval failed.");
       }
@@ -155,6 +157,17 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
             onChange={handleChange}
           />
 
+          <label><b>System Type:</b></label>
+          <select
+            name="system_type"
+            value={editedData.system_type}
+            onChange={handleChange}
+          >
+            <option value="internal">internal</option>
+            <option value="external">external</option>
+            <option value="unclassified">unclassified</option>
+          </select>
+
           <div className="button-group">
             <button onClick={handleSave}>💾 Save</button>
             <button onClick={() => setEditMode(false)}>Cancel</button>
@@ -167,6 +180,7 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
           <p><b>Downstream:</b> {system.downstream_dependencies?.join(", ")}</p>
           <p><b>Key Contacts:</b> {system.key_contacts?.join(", ")}</p>
           <p><b>Source:</b> {system.source_reference}</p>
+          <p><b>System Type:</b> {system.system_type}</p>
         </>
       )}
 

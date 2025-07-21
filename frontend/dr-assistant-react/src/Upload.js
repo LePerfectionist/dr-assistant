@@ -1,10 +1,10 @@
-// Upload.js
 import React, { useState } from "react";
 import "./Upload.css";
 
 /**
- * Upload component allows drag-and-drop or file selection.
- * Uploads the file, triggers system extraction, and sets the results in state.
+ * Upload component for uploading runbooks and extracting systems.
+ * Supports drag-and-drop, progress indicator, and canceling upload.
+ * Designed for the new backend System model.
  */
 function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
   const [loading, setLoading] = useState(false);
@@ -12,6 +12,13 @@ function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
   const [dragActive, setDragActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const [abortController, setAbortController] = useState(null);
+
+  const resetState = () => {
+    setFileName("");
+    setProgress(0);
+    setSystems([]);
+    setApplicationId(null);
+  };
 
   const handleFileUpload = async (file) => {
     if (!file || !token) return;
@@ -27,7 +34,7 @@ function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
     setAbortController(controller);
 
     try {
-      // Upload the file
+      // Upload
       const uploadRes = await fetch("http://localhost:8000/api/v1/documents/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -40,9 +47,9 @@ function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
       const appId = uploadData.id;
 
       setApplicationId(appId);
-      setProgress(60);
+      setProgress(50);
 
-      // Trigger system extraction
+      // Extract systems
       const extractRes = await fetch(`http://localhost:8000/api/v1/extraction/${appId}/extract_systems`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -52,19 +59,30 @@ function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
       if (!extractRes.ok) throw new Error("Extraction failed");
 
       const systems = await extractRes.json();
-      setSystems(systems);
-      if (systems.length > 0 && typeof onSelect === "function") {
-        onSelect(systems[0]);
+
+      // Ensure new System fields are handled gracefully
+      const enrichedSystems = systems.map((sys) => ({
+        ...sys,
+        upstream_dependencies: sys.upstream_dependencies || [],
+        downstream_dependencies: sys.downstream_dependencies || [],
+        key_contacts: sys.key_contacts || [],
+        system_type: sys.system_type || "internal",
+      }));
+
+      setSystems(enrichedSystems);
+      if (enrichedSystems.length > 0 && typeof onSelect === "function") {
+        onSelect(enrichedSystems[0]);
       }
 
       setProgress(100);
     } catch (err) {
       if (err.name === "AbortError") {
-        alert("Upload canceled");
+        alert("Upload canceled.");
       } else {
-        console.error(err);
-        alert("Something went wrong during file upload or extraction.");
+        console.error("Upload/Extraction error:", err);
+        alert("Failed to upload or extract systems. Please try again.");
       }
+      resetState();
     } finally {
       setLoading(false);
       setAbortController(null);
@@ -78,7 +96,6 @@ function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
 
   const handleDrop = (e) => {
     e.preventDefault();
-    e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files[0]);
@@ -87,12 +104,13 @@ function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
 
   const handleDrag = (e) => {
     e.preventDefault();
-    e.stopPropagation();
     setDragActive(e.type === "dragenter" || e.type === "dragover");
   };
 
   const cancelUpload = () => {
-    if (abortController) abortController.abort();
+    if (abortController) {
+      abortController.abort();
+    }
   };
 
   return (
@@ -115,7 +133,9 @@ function Upload({ token, setSystems, setApplicationId, onSelect, selectedId }) {
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${progress}%` }}></div>
           </div>
-          <button className="cancel-btn" onClick={cancelUpload}>Cancel Upload</button>
+          <button className="cancel-btn" onClick={cancelUpload}>
+            Cancel Upload
+          </button>
         </>
       )}
 
