@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import ReactMarkdown from "react-markdown";
+import DependencyInput from './DependencyInput';
 import "./MyApplications.css";
 import apiClient from './apiClient';
 
@@ -13,6 +14,7 @@ function MyApplications( { setView }) {
   const [selectedSystemId, setSelectedSystemId] = useState(null);
   const [editedData, setEditedData] = useState({});
   const [editMode, setEditMode] = useState(false);
+  const [dependencySuggestions, setDependencySuggestions] = useState([]);
 
   const fetchApplications = async () => {
     const url =
@@ -51,13 +53,24 @@ function MyApplications( { setView }) {
     }
   };
 
+  useEffect(() => {
+    if (expandedAppId && systemsMap[expandedAppId]) {
+      const allSystemNames = systemsMap[expandedAppId].map(sys => ({
+        id: sys.name,
+        text: sys.name
+      }));
+      setDependencySuggestions(allSystemNames);
+    }
+  }, [expandedAppId, systemsMap]);
+
   const handleSystemClick = (sys) => {
     setSelectedSystemId(sys.id);
     setEditedData({
       dr_data: sys.dr_data || "",
-      upstream_dependencies: sys.upstream_dependencies?.join(", ") || "",
-      downstream_dependencies: sys.downstream_dependencies?.join(", ") || "",
-      key_contacts: sys.key_contacts?.join(", ") || "",
+      // Convert arrays of strings to the { id, text } format for the tag component
+      upstream_dependencies: sys.upstream_dependencies?.map(d => ({ id: d, text: d })) || [],
+      downstream_dependencies: sys.downstream_dependencies?.map(d => ({ id: d, text: d })) || [],
+      key_contacts: sys.key_contacts?.join(", ") || "", // Keep contacts as a simple string for now
       source_reference: sys.source_reference || "",
       approved_by: sys.approved_by,
       approved_at: sys.approved_at,
@@ -85,6 +98,16 @@ function MyApplications( { setView }) {
   };
 
   const handleSave = async () => {
+    const body = JSON.stringify(
+      {
+        dr_data: editedData.dr_data,
+        // Convert arrays of tags back to arrays of strings
+        upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
+        downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
+        key_contacts: editedData.key_contacts.split(",").map((c) => c.trim()),
+        source_reference: editedData.source_reference,
+      }
+    );
     const res = await fetch(
       `http://localhost:8000/api/v1/validation/systems/${selectedSystemId}/update`,
       {
@@ -93,19 +116,7 @@ function MyApplications( { setView }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          dr_data: editedData.dr_data,
-          upstream_dependencies: editedData.upstream_dependencies
-            .split(",")
-            .map((d) => d.trim()),
-          downstream_dependencies: editedData.downstream_dependencies
-            .split(",")
-            .map((d) => d.trim()),
-          key_contacts: editedData.key_contacts
-            .split(",")
-            .map((c) => c.trim()),
-          source_reference: editedData.source_reference,
-        }),
+        body: body
       }
     );
     if (res.ok) {
@@ -186,25 +197,22 @@ function MyApplications( { setView }) {
                     setEditedData({ ...editedData, dr_data: e.target.value })
                   }
                 />
-                <label>Upstream Dependencies (comma-separated)</label>
-                <input
-                  value={editedData.upstream_dependencies}
-                  onChange={(e) =>
-                    setEditedData({
-                      ...editedData,
-                      upstream_dependencies: e.target.value,
-                    })
+                <label>Upstream Dependencies</label>
+                <DependencyInput
+                  tags={editedData.upstream_dependencies || []}
+                  setTags={(newTags) => 
+                    setEditedData({ ...editedData, upstream_dependencies: newTags })
                   }
+                  suggestions={dependencySuggestions}
                 />
-                <label>Downstream Dependencies (comma-separated)</label>
-                <input
-                  value={editedData.downstream_dependencies}
-                  onChange={(e) =>
-                    setEditedData({
-                      ...editedData,
-                      downstream_dependencies: e.target.value,
-                    })
+
+                <label>Downstream Dependencies</label>
+                <DependencyInput
+                  tags={editedData.downstream_dependencies || []}
+                  setTags={(newTags) => 
+                    setEditedData({ ...editedData, downstream_dependencies: newTags })
                   }
+                  suggestions={dependencySuggestions}
                 />
                 <label>Key Contacts (comma-separated)</label>
                 <input

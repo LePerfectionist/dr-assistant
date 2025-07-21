@@ -34,18 +34,40 @@ def list_systems_for_app(
 @router.patch("/systems/{system_id}/update", response_model=SystemResponse)
 def update_system(
     system_id: int,
-    update: SystemUpdate,
+    system_update_data: SystemUpdate,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
     system = db.get(System, system_id)
     if not system:
         raise HTTPException(status_code=404, detail="System not found.")
+    
+    # Validation to check if dependencies are in list of allowed systems
+    parent_application = system.application
+    all_system_names_in_app = {s.name for s in parent_application.systems}
 
-    system.dr_data = update.dr_data
-    system.upstream_dependencies = update.upstream_dependencies
-    system.downstream_dependencies = update.downstream_dependencies
-    system.source_reference = update.source_reference
+    if system_update_data.upstream_dependencies is not None:
+        for dep_name in system_update_data.upstream_dependencies:
+            if dep_name not in all_system_names_in_app:
+                raise HTTPException(
+                    status_code=400, # Bad Request
+                    detail=f"Validation Error: Upstream dependency '{dep_name}' does not exist as a system in this application. Please create it first or correct the name."
+                )
+    if system_update_data.downstream_dependencies is not None:
+        for dep_name in system_update_data.downstream_dependencies:
+            if dep_name not in all_system_names_in_app:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Validation Error: Downstream dependency '{dep_name}' does not exist as a system in this application. Please create it first or correct the name."
+                )
+    
+    
+
+
+    system.dr_data = system_update_data.dr_data
+    system.upstream_dependencies = system_update_data.upstream_dependencies
+    system.downstream_dependencies = system_update_data.downstream_dependencies
+    system.source_reference = system_update_data.source_reference
 
     db.add(system)
     db.commit()

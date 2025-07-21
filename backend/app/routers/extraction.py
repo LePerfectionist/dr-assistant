@@ -90,6 +90,13 @@ def extract_dr_systems(
                 newly_created_systems.append(system_to_create)
 
         if newly_created_systems:
+            # Checking if dependencies are a subset of the list of extracted systems
+            system_names = [system.name for system in newly_created_systems]
+            for system in newly_created_systems:
+                system.upstream_dependencies = [dep for dep in system.upstream_dependencies if dep in system_names]
+                system.downstream_dependencies = [dep for dep in system.upstream_dependencies if dep in system_names]
+
+
             session.commit()
             for system in newly_created_systems:
                 session.refresh(system) # Ensure IDs are loaded back
