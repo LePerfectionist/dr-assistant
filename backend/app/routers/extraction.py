@@ -6,7 +6,7 @@ from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
 
 from app.database import get_session
 from app.models.application import Application
-from app.models.system import System
+from app.models.system import System, SystemType
 from app.models.user import User
 from app.schema import SystemResponse
 from app.routers.auth import get_current_user
@@ -79,6 +79,7 @@ def extract_dr_systems(
             if parsed_data and parsed_data.get("is_dr_section"):
                 system_to_create = System(
                     name=parsed_data.get("system_name", "Unknown System"),
+                    system_type=SystemType.INTERNAL,
                     dr_data=parsed_data.get("dr_data", ""),
                     upstream_dependencies=parsed_data.get("upstream_dependencies", []),
                     downstream_dependencies=parsed_data.get("downstream_dependencies", []),
