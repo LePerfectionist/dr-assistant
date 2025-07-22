@@ -175,3 +175,32 @@ td button:last-child:hover {
   border-radius: 10px;
   border: 1px solid #eee;
 }
+.criticality {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.9em;
+  display: inline-block;
+}
+.criticality.critical {
+  background-color: #f44336;
+  color: white;
+}
+.criticality.high {
+  background-color: #ff9800;
+  color: white;
+}
+.criticality.medium {
+  background-color: #ffeb3b;
+  color: #333;
+}
+.criticality.low {
+  background-color: #4caf50;
+  color: white;
+}
+.dual-charts {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  margin-bottom: 40px;  /* ⬅️ increase this for more spacing */
+}
