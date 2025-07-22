@@ -13,6 +13,7 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
     system_type: "internal",
   });
 
+  // Initialize data when system changes or when entering edit mode
   useEffect(() => {
     if (system) {
       setEditedData({
@@ -24,15 +25,17 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
         system_type: system.system_type || "internal",
       });
     }
-  }, [system]);
-
-  if (!system) return <div className="detail-panel">Select a system to view details.</div>;
+  }, [system, editMode]); // Reset when system or edit mode changes
 
   const canEdit = user?.role === "admin" || user?.role === "checker";
   const canApprove = canEdit;
 
   const handleChange = (e) => {
-    setEditedData({ ...editedData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setEditedData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSave = async () => {
@@ -44,26 +47,36 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
     const confirmEdit = window.confirm("Are you sure you want to save the changes?");
     if (!confirmEdit) return;
 
-    const url =
-      user.role === "admin"
+    try {
+      const url = user.role === "admin"
         ? `http://localhost:8000/api/v1/admin/systems/${system.id}/update`
         : `http://localhost:8000/api/v1/validation/systems/${system.id}/update`;
 
-    try {
+      const payload = {
+        dr_data: editedData.dr_data,
+        system_type: editedData.system_type,
+        source_reference: editedData.source_reference || null,
+        upstream_dependencies: editedData.upstream_dependencies
+          .split(",")
+          .map(d => d.trim())
+          .filter(Boolean),
+        downstream_dependencies: editedData.downstream_dependencies
+          .split(",")
+          .map(d => d.trim())
+          .filter(Boolean),
+        key_contacts: editedData.key_contacts
+          .split(",")
+          .map(d => d.trim())
+          .filter(Boolean),
+      };
+
       const res = await fetch(url, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${user.token}`,
         },
-        body: JSON.stringify({
-          dr_data: editedData.dr_data,
-          upstream_dependencies: editedData.upstream_dependencies.split(",").map((d) => d.trim()),
-          downstream_dependencies: editedData.downstream_dependencies.split(",").map((d) => d.trim()),
-          key_contacts: editedData.key_contacts.split(",").map((d) => d.trim()),
-          source_reference: editedData.source_reference,
-          system_type: editedData.system_type,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -72,10 +85,11 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
         setEditMode(false);
         onUpdate && onUpdate(updated);
       } else {
-        alert("Failed to update system.");
+        const errorData = await res.json();
+        alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Update error:", err);
       alert("Error occurred during update.");
     }
   };
@@ -89,10 +103,9 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
     if (!confirm) return;
 
     try {
-      const url =
-        user.role === "admin"
-          ? `http://localhost:8000/api/v1/admin/systems/${system.id}/approve`
-          : `http://localhost:8000/api/v1/validation/systems/${system.id}/approve`;
+      const url = user.role === "admin"
+        ? `http://localhost:8000/api/v1/admin/systems/${system.id}/approve`
+        : `http://localhost:8000/api/v1/validation/systems/${system.id}/approve`;
 
       const res = await fetch(url, {
         method: "PATCH",
@@ -113,6 +126,8 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
     }
   };
 
+  if (!system) return <div className="detail-panel">Select a system to view details.</div>;
+
   return (
     <div className={`detail-panel ${editMode ? "edit-mode" : ""}`}>
       <h3>{system.name}</h3>
@@ -121,84 +136,163 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
 
       {editMode ? (
         <>
-          <label><b>DR Data:</b></label>
-          <textarea
-            name="dr_data"
-            value={editedData.dr_data}
-            onChange={handleChange}
-            rows={6}
-          />
+          <div className="form-group">
+            <label><b>DR Data:</b></label>
+            <textarea
+              name="dr_data"
+              value={editedData.dr_data}
+              onChange={handleChange}
+              rows={6}
+            />
+          </div>
 
-          <label><b>Upstream Dependencies (comma-separated):</b></label>
-          <input
-            name="upstream_dependencies"
-            value={editedData.upstream_dependencies}
-            onChange={handleChange}
-          />
+          <div className="form-group">
+            <label><b>Upstream Dependencies (comma-separated):</b></label>
+            <input
+              type="text"
+              name="upstream_dependencies"
+              value={editedData.upstream_dependencies}
+              onChange={handleChange}
+              placeholder="dependency1, dependency2"
+            />
+          </div>
 
-          <label><b>Downstream Dependencies (comma-separated):</b></label>
-          <input
-            name="downstream_dependencies"
-            value={editedData.downstream_dependencies}
-            onChange={handleChange}
-          />
+          <div className="form-group">
+            <label><b>Downstream Dependencies (comma-separated):</b></label>
+            <input
+              type="text"
+              name="downstream_dependencies"
+              value={editedData.downstream_dependencies}
+              onChange={handleChange}
+              placeholder="dependency1, dependency2"
+            />
+          </div>
 
-          <label><b>Key Contacts (comma-separated):</b></label>
-          <input
-            name="key_contacts"
-            value={editedData.key_contacts}
-            onChange={handleChange}
-          />
+          <div className="form-group">
+            <label><b>Key Contacts (comma-separated):</b></label>
+            <input
+              type="text"
+              name="key_contacts"
+              value={editedData.key_contacts}
+              onChange={handleChange}
+              placeholder="email1@example.com, email2@example.com"
+            />
+          </div>
 
-          <label><b>Source Reference:</b></label>
-          <input
-            name="source_reference"
-            value={editedData.source_reference}
-            onChange={handleChange}
-          />
+          <div className="form-group">
+            <label><b>Source Reference:</b></label>
+            <input
+              type="text"
+              name="source_reference"
+              value={editedData.source_reference}
+              onChange={handleChange}
+            />
+          </div>
 
-          <label><b>System Type:</b></label>
-          <select
-            name="system_type"
-            value={editedData.system_type}
-            onChange={handleChange}
-          >
-            <option value="internal">internal</option>
-            <option value="external">external</option>
-            <option value="unclassified">unclassified</option>
-          </select>
+          <div className="form-group">
+            <label><b>System Type:</b></label>
+            <select
+              name="system_type"
+              value={editedData.system_type}
+              onChange={handleChange}
+            >
+              <option value="internal">Internal</option>
+              <option value="external">External</option>
+              <option value="unclassified">Unclassified</option>
+            </select>
+          </div>
 
           <div className="button-group">
-            <button onClick={handleSave}>💾 Save</button>
-            <button onClick={() => setEditMode(false)}>Cancel</button>
+            <button className="btn-save" onClick={handleSave}>💾 Save</button>
+            <button className="btn-cancel" onClick={() => setEditMode(false)}>Cancel</button>
           </div>
         </>
       ) : (
         <>
-          <ReactMarkdown>{system.dr_data}</ReactMarkdown>
-          <p><b>Upstream:</b> {system.upstream_dependencies?.join(", ")}</p>
-          <p><b>Downstream:</b> {system.downstream_dependencies?.join(", ")}</p>
-          <p><b>Key Contacts:</b> {system.key_contacts?.join(", ")}</p>
-          <p><b>Source:</b> {system.source_reference}</p>
-          <p><b>System Type:</b> {system.system_type}</p>
+          <div className="data-section">
+            <h4>DR Data</h4>
+            <div className="data-content">
+              <ReactMarkdown>{system.dr_data || "No DR data available"}</ReactMarkdown>
+            </div>
+          </div>
+
+          <div className="data-grid">
+            <div className="data-item">
+              <h4>Upstream Dependencies</h4>
+              <div className="data-content">
+                {system.upstream_dependencies?.length ? (
+                  <ul>
+                    {system.upstream_dependencies.map((dep, index) => (
+                      <li key={index}>{dep}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No upstream dependencies</p>
+                )}
+              </div>
+            </div>
+
+            <div className="data-item">
+              <h4>Downstream Dependencies</h4>
+              <div className="data-content">
+                {system.downstream_dependencies?.length ? (
+                  <ul>
+                    {system.downstream_dependencies.map((dep, index) => (
+                      <li key={index}>{dep}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No downstream dependencies</p>
+                )}
+              </div>
+            </div>
+
+            <div className="data-item">
+              <h4>Key Contacts</h4>
+              <div className="data-content">
+                {system.key_contacts?.length ? (
+                  <ul>
+                    {system.key_contacts.map((contact, index) => (
+                      <li key={index}>{contact}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No key contacts</p>
+                )}
+              </div>
+            </div>
+
+            <div className="data-item">
+              <h4>System Metadata</h4>
+              <div className="data-content">
+                <p><b>Type:</b> {system.system_type || "internal"}</p>
+                <p><b>Source:</b> {system.source_reference || "Not specified"}</p>
+                {system.is_approved && (
+                  <p className="approval-info">
+                    <b>Approved by:</b> {system.approved_by}<br />
+                    <b>Approved at:</b> {new Date(system.approved_at).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="action-buttons">
+            {canEdit && (
+              <button className="btn-edit" onClick={() => setEditMode(true)}>
+                ✏️ Edit
+              </button>
+            )}
+            {canApprove && (
+              <button
+                className={`btn-approve ${system.is_approved ? "approved" : ""}`}
+                onClick={handleApproveClick}
+              >
+                {system.is_approved ? "🔁 Re-Approve" : "✅ Approve"}
+              </button>
+            )}
+          </div>
         </>
-      )}
-
-      {!editMode && canEdit && (
-        <button onClick={() => setEditMode(true)}>✏️ Edit</button>
-      )}
-
-      {canApprove && (
-        <button onClick={handleApproveClick}>
-          {system.is_approved ? "🔁 Re-Approve" : "✅ Approve"}
-        </button>
-      )}
-
-      {system.is_approved && system.approved_by && (
-        <span className="approved-badge">
-          ✅ Approved by {system.approved_by}<br />
-          🕒 {new Date(system.approved_at).toLocaleString()} UTC
-        </span>
       )}
     </div>
   );

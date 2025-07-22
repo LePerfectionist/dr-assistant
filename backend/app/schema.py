@@ -91,23 +91,27 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
+from enum import Enum
 
-# === SYSTEM ===
+class SystemType(str, Enum):
+    INTERNAL = "internal"
+    EXTERNAL = "external"
+    UNCLASSIFIED = "unclassified"
 
 class SystemBase(BaseModel):
     name: str
-    dr_data: Optional[str]
-    system_type: Optional[str] = "internal"  # Added this line
-    upstream_dependencies: List[str]
-    downstream_dependencies: List[str]
-    key_contacts: List[str]
+    dr_data: Optional[str] = None
+    system_type: SystemType = SystemType.INTERNAL
+    upstream_dependencies: List[str] = []
+    downstream_dependencies: List[str] = []
+    key_contacts: List[str] = []
 
 class SystemResponse(SystemBase):
     id: int
     is_approved: bool
     approved_by: Optional[str] = None
     approved_at: Optional[datetime] = None
-    source_reference: Optional[str]
+    source_reference: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -116,13 +120,12 @@ class SystemCreateAdmin(SystemBase):
     source_reference: Optional[str] = "Manually created by admin"
 
 class SystemUpdate(BaseModel):
-    dr_data: Optional[str]
-    system_type: Optional[str] = None  # Added this line
-    upstream_dependencies: List[str]
-    downstream_dependencies: List[str]
-    key_contacts: List[str]
+    dr_data: Optional[str] = None
+    system_type: Optional[SystemType] = None
+    upstream_dependencies: Optional[List[str]] = None
+    downstream_dependencies: Optional[List[str]] = None
+    key_contacts: Optional[List[str]] = None
     source_reference: Optional[str] = None
-
 # === RUNBOOK ===
 
 class RunbookResponse(BaseModel):
