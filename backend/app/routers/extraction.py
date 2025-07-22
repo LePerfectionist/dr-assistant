@@ -71,23 +71,31 @@ def extract_dr_systems(
             prompt_template = f.read()
 
         newly_created_systems = []
-        for node in relevant_nodes:
+        for i, node in enumerate(relevant_nodes):
             prompt = prompt_template.format(text=node.text)
+            print(f"Processing node {i}/{len(relevant_nodes)}...")
             response = get_openai_chat_completion_repsonse(user_prompt=prompt)
             parsed_data = extract_json_from_response(response)
 
             if parsed_data and parsed_data.get("is_dr_section"):
+                #dr_data might come as list, concatenate to form string
+                parsed_dr_data = parsed_data.get("dr_data")
+                if parsed_dr_data:
+                    if isinstance(parsed_dr_data, list):
+                        parsed_dr_data_str = "\n".join(parsed_dr_data)
+                    else:
+                        parsed_dr_data_str = str(parsed_dr_data)
+
                 system_to_create = System(
                     name=parsed_data.get("system_name", "Unknown System"),
                     system_type=SystemType.INTERNAL,
-                    dr_data=parsed_data.get("dr_data", ""),
+                    dr_data=parsed_dr_data_str,
                     upstream_dependencies=parsed_data.get("upstream_dependencies", []),
                     downstream_dependencies=parsed_data.get("downstream_dependencies", []),
                     key_contacts=parsed_data.get("key_contacts", []),
                     application_id=application_id,
                     source_reference=f"File: {runbook.filename}, Page Number: {node.metadata['page_number']}, Section near text: '{node.text[:25]}...'"
                 )
-                session.add(system_to_create)
                 newly_created_systems.append(system_to_create)
 
         if newly_created_systems:
@@ -96,6 +104,7 @@ def extract_dr_systems(
             for system in newly_created_systems:
                 system.upstream_dependencies = [dep for dep in system.upstream_dependencies if dep in system_names]
                 system.downstream_dependencies = [dep for dep in system.upstream_dependencies if dep in system_names]
+                session.add(system)
 
 
             session.commit()

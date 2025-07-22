@@ -30,6 +30,7 @@ function DependencyInput({ tags, setTags, suggestions }) {
         handleAddition={handleAddition}
         delimiters={delimiters}
         placeholder="Add a dependency and press Enter"
+        allowUnique={true}
         minQueryLength={1}
         allowDragDrop={false}
         classNames={{

@@ -240,14 +240,30 @@ function MyApplications( { setView }) {
             ) : (
               <>
                 <ReactMarkdown>{editedData.dr_data}</ReactMarkdown>
-                <p>
-                  <strong>Upstream:</strong>{" "}
-                  {editedData.upstream_dependencies}
-                </p>
-                <p>
-                  <strong>Downstream:</strong>{" "}
-                  {editedData.downstream_dependencies}
-                </p>
+                <p><strong>Upstream:</strong></p>
+                <div className="dependency-tags-display">
+                  {editedData.upstream_dependencies?.map(tag => (
+                    <span 
+                      key={tag.id} 
+                      // Add a conditional class: 'external' if the system name is not in our suggestions list
+                      className={`tag-display ${!dependencySuggestions.some(s => s.id === tag.id) ? 'external' : ''}`}
+                    >
+                      {tag.text}
+                    </span>
+                  ))}
+                </div>
+
+                <p><strong>Downstream:</strong></p>
+                <div className="dependency-tags-display">
+                   {editedData.downstream_dependencies?.map(tag => (
+                    <span 
+                      key={tag.id} 
+                      className={`tag-display ${!dependencySuggestions.some(s => s.id === tag.id) ? 'external' : ''}`}
+                    >
+                      {tag.text}
+                    </span>
+                  ))}
+                </div>
                 <p>
                   <strong>Key Contacts:</strong> {editedData.key_contacts}
                 </p>
