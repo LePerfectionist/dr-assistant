@@ -1,31 +1,33 @@
 // import React, { useState, useEffect } from "react";
 // import ReactMarkdown from "react-markdown";
+// import DependencyInput from './DependencyInput';
 // import "./SystemDetail.css";
 
 // function SystemDetail({ system, user, onApprove, onUpdate }) {
 //   const [editMode, setEditMode] = useState(false);
 //   const [editedData, setEditedData] = useState({
 //     dr_data: "",
-//     upstream_dependencies: "",
-//     downstream_dependencies: "",
+//     upstream_dependencies: [],
+//     downstream_dependencies: [],
 //     key_contacts: "",
 //     source_reference: "",
 //     system_type: "internal",
 //   });
+//   const [dependencySuggestions, setDependencySuggestions] = useState([]);
 
-//   // Initialize data when system changes or when entering edit mode
+//   // Initialize data when system changes
 //   useEffect(() => {
 //     if (system) {
 //       setEditedData({
 //         dr_data: system.dr_data || "",
-//         upstream_dependencies: system.upstream_dependencies?.join(", ") || "",
-//         downstream_dependencies: system.downstream_dependencies?.join(", ") || "",
+//         upstream_dependencies: system.upstream_dependencies?.map(d => ({ id: d, text: d })) || [],
+//         downstream_dependencies: system.downstream_dependencies?.map(d => ({ id: d, text: d })) || [],
 //         key_contacts: system.key_contacts?.join(", ") || "",
 //         source_reference: system.source_reference || "",
 //         system_type: system.system_type || "internal",
 //       });
 //     }
-//   }, [system, editMode]); // Reset when system or edit mode changes
+//   }, [system]);
 
 //   const canEdit = user?.role === "admin" || user?.role === "checker";
 //   const canApprove = canEdit;
@@ -56,14 +58,8 @@
 //         dr_data: editedData.dr_data,
 //         system_type: editedData.system_type,
 //         source_reference: editedData.source_reference || null,
-//         upstream_dependencies: editedData.upstream_dependencies
-//           .split(",")
-//           .map(d => d.trim())
-//           .filter(Boolean),
-//         downstream_dependencies: editedData.downstream_dependencies
-//           .split(",")
-//           .map(d => d.trim())
-//           .filter(Boolean),
+//         upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
+//         downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
 //         key_contacts: editedData.key_contacts
 //           .split(",")
 //           .map(d => d.trim())
@@ -126,7 +122,13 @@
 //     }
 //   };
 
-//   if (!system) return <div className="detail-panel">Select a system to view details.</div>;
+//   if (!system) {
+//     return (
+//       <div className="detail-panel no-system-selected">
+//         <p>Please select a system to view details</p>
+//       </div>
+//     );
+//   }
 
 //   return (
 //     <div className={`detail-panel ${editMode ? "edit-mode" : ""}`}>
@@ -147,24 +149,20 @@
 //           </div>
 
 //           <div className="form-group">
-//             <label><b>Upstream Dependencies (comma-separated):</b></label>
-//             <input
-//               type="text"
-//               name="upstream_dependencies"
-//               value={editedData.upstream_dependencies}
-//               onChange={handleChange}
-//               placeholder="dependency1, dependency2"
+//             <label><b>Upstream Dependencies:</b></label>
+//             <DependencyInput
+//               tags={editedData.upstream_dependencies}
+//               setTags={(newTags) => setEditedData({...editedData, upstream_dependencies: newTags})}
+//               suggestions={dependencySuggestions}
 //             />
 //           </div>
 
 //           <div className="form-group">
-//             <label><b>Downstream Dependencies (comma-separated):</b></label>
-//             <input
-//               type="text"
-//               name="downstream_dependencies"
-//               value={editedData.downstream_dependencies}
-//               onChange={handleChange}
-//               placeholder="dependency1, dependency2"
+//             <label><b>Downstream Dependencies:</b></label>
+//             <DependencyInput
+//               tags={editedData.downstream_dependencies}
+//               setTags={(newTags) => setEditedData({...editedData, downstream_dependencies: newTags})}
+//               suggestions={dependencySuggestions}
 //             />
 //           </div>
 
@@ -219,13 +217,13 @@
 //           <div className="data-grid">
 //             <div className="data-item">
 //               <h4>Upstream Dependencies</h4>
-//               <div className="data-content">
+//               <div className="dependency-tags-display">
 //                 {system.upstream_dependencies?.length ? (
-//                   <ul>
-//                     {system.upstream_dependencies.map((dep, index) => (
-//                       <li key={index}>{dep}</li>
-//                     ))}
-//                   </ul>
+//                   system.upstream_dependencies.map((dep, index) => (
+//                     <span key={index} className="tag-display">
+//                       {dep}
+//                     </span>
+//                   ))
 //                 ) : (
 //                   <p>No upstream dependencies</p>
 //                 )}
@@ -234,13 +232,13 @@
 
 //             <div className="data-item">
 //               <h4>Downstream Dependencies</h4>
-//               <div className="data-content">
+//               <div className="dependency-tags-display">
 //                 {system.downstream_dependencies?.length ? (
-//                   <ul>
-//                     {system.downstream_dependencies.map((dep, index) => (
-//                       <li key={index}>{dep}</li>
-//                     ))}
-//                   </ul>
+//                   system.downstream_dependencies.map((dep, index) => (
+//                     <span key={index} className="tag-display">
+//                       {dep}
+//                     </span>
+//                   ))
 //                 ) : (
 //                   <p>No downstream dependencies</p>
 //                 )}
@@ -299,6 +297,7 @@
 // }
 
 // export default SystemDetail;
+
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import DependencyInput from './DependencyInput';
@@ -316,7 +315,6 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
   });
   const [dependencySuggestions, setDependencySuggestions] = useState([]);
 
-  // Initialize data when system changes
   useEffect(() => {
     if (system) {
       setEditedData({
@@ -342,54 +340,80 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
   };
 
   const handleSave = async () => {
-    if (!editedData.dr_data.trim()) {
-      alert("DR Data cannot be empty.");
-      return;
-    }
+  if (!editedData.dr_data.trim()) {
+    alert("DR Data cannot be empty.");
+    return;
+  }
 
-    const confirmEdit = window.confirm("Are you sure you want to save the changes?");
-    if (!confirmEdit) return;
+  const confirmEdit = window.confirm("Are you sure you want to save the changes?");
+  if (!confirmEdit) return;
 
-    try {
-      const url = user.role === "admin"
-        ? `http://localhost:8000/api/v1/admin/systems/${system.id}/update`
-        : `http://localhost:8000/api/v1/validation/systems/${system.id}/update`;
+  try {
+    const url = user.role === "admin"
+      ? `http://localhost:8000/api/v1/admin/systems/${system.id}/update`
+      : `http://localhost:8000/api/v1/validation/systems/${system.id}/update`;
 
-      const payload = {
-        dr_data: editedData.dr_data,
-        system_type: editedData.system_type,
-        source_reference: editedData.source_reference || null,
-        upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
-        downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
-        key_contacts: editedData.key_contacts
-          .split(",")
-          .map(d => d.trim())
-          .filter(Boolean),
-      };
+    const payload = {
+      dr_data: editedData.dr_data,
+      system_type: editedData.system_type,
+      source_reference: editedData.source_reference || null,
+      upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
+      downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
+      key_contacts: editedData.key_contacts
+        .split(",")
+        .map(d => d.trim())
+        .filter(Boolean),
+    };
 
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+    // First try without force_external
+    let res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-      if (res.ok) {
-        const updated = await res.json();
-        alert("System updated successfully!");
-        setEditMode(false);
-        onUpdate && onUpdate(updated);
-      } else {
-        const errorData = await res.json();
-        alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
+    // If we get an error about external dependencies, ask for confirmation
+    if (!res.ok) {
+      const errorData = await res.json();
+      if (errorData.detail && errorData.detail.includes('Set force_external=true')) {
+        const confirmExternal = window.confirm(
+          `${errorData.detail}\n\nDo you want to proceed with these external dependencies?`
+        );
+        
+        if (confirmExternal) {
+          // Try again with force_external=true
+          const urlWithForce = `${url}?force_external=true`;
+          res = await fetch(urlWithForce, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${user.token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          return; // User canceled
+        }
       }
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("Error occurred during update.");
     }
-  };
+
+    if (res.ok) {
+      const updated = await res.json();
+      alert("System updated successfully!");
+      setEditMode(false);
+      onUpdate && onUpdate(updated);
+    } else {
+      const errorData = await res.json();
+      alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
+    }
+  } catch (err) {
+    console.error("Update error:", err);
+    alert("Error occurred during update.");
+  }
+};
 
   const handleApproveClick = async () => {
     const confirm = window.confirm(

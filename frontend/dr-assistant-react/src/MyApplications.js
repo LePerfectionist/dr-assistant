@@ -1,12 +1,10 @@
-
 // import React, { useEffect, useState } from "react";
 // import { useAuth } from "./AuthContext";
 // import ReactMarkdown from "react-markdown";
 // import DependencyInput from './DependencyInput';
 // import "./MyApplications.css";
-// import apiClient from './apiClient';
 
-// function MyApplications( { setView }) {
+// function MyApplications({ setView }) {
 //   const { user, token } = useAuth();
 //   const [applications, setApplications] = useState([]);
 //   const [expandedAppId, setExpandedAppId] = useState(null);
@@ -67,11 +65,11 @@
 //     setSelectedSystemId(sys.id);
 //     setEditedData({
 //       dr_data: sys.dr_data || "",
-//       // Convert arrays of strings to the { id, text } format for the tag component
 //       upstream_dependencies: sys.upstream_dependencies?.map(d => ({ id: d, text: d })) || [],
 //       downstream_dependencies: sys.downstream_dependencies?.map(d => ({ id: d, text: d })) || [],
-//       key_contacts: sys.key_contacts?.join(", ") || "", // Keep contacts as a simple string for now
+//       key_contacts: sys.key_contacts?.join(", ") || "",
 //       source_reference: sys.source_reference || "",
+//       system_type: sys.system_type || "internal",
 //       approved_by: sys.approved_by,
 //       approved_at: sys.approved_at,
 //       is_approved: sys.is_approved,
@@ -98,16 +96,15 @@
 //   };
 
 //   const handleSave = async () => {
-//     const body = JSON.stringify(
-//       {
-//         dr_data: editedData.dr_data,
-//         // Convert arrays of tags back to arrays of strings
-//         upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
-//         downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
-//         key_contacts: editedData.key_contacts.split(",").map((c) => c.trim()),
-//         source_reference: editedData.source_reference,
-//       }
-//     );
+//     const body = JSON.stringify({
+//       dr_data: editedData.dr_data,
+//       upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
+//       downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
+//       key_contacts: editedData.key_contacts.split(",").map((c) => c.trim()),
+//       source_reference: editedData.source_reference,
+//       system_type: editedData.system_type,
+//     });
+
 //     const res = await fetch(
 //       `http://localhost:8000/api/v1/validation/systems/${selectedSystemId}/update`,
 //       {
@@ -197,6 +194,19 @@
 //                     setEditedData({ ...editedData, dr_data: e.target.value })
 //                   }
 //                 />
+                
+//                 <label>System Type</label>
+//                 <select
+//                   value={editedData.system_type}
+//                   onChange={(e) =>
+//                     setEditedData({ ...editedData, system_type: e.target.value })
+//                   }
+//                 >
+//                   <option value="internal">Internal</option>
+//                   <option value="external">External</option>
+//                   <option value="unclassified">Unclassified</option>
+//                 </select>
+
 //                 <label>Upstream Dependencies</label>
 //                 <DependencyInput
 //                   tags={editedData.upstream_dependencies || []}
@@ -214,6 +224,7 @@
 //                   }
 //                   suggestions={dependencySuggestions}
 //                 />
+
 //                 <label>Key Contacts (comma-separated)</label>
 //                 <input
 //                   value={editedData.key_contacts}
@@ -224,6 +235,7 @@
 //                     })
 //                   }
 //                 />
+
 //                 <label>Source Reference</label>
 //                 <input
 //                   value={editedData.source_reference}
@@ -234,18 +246,21 @@
 //                     })
 //                   }
 //                 />
+
 //                 <button onClick={handleSave}>💾 Save</button>
 //                 <button onClick={() => setEditMode(false)}>Cancel</button>
 //               </>
 //             ) : (
 //               <>
 //                 <ReactMarkdown>{editedData.dr_data}</ReactMarkdown>
+                
+//                 <p><strong>System Type:</strong> {editedData.system_type || "internal"}</p>
+                
 //                 <p><strong>Upstream:</strong></p>
 //                 <div className="dependency-tags-display">
 //                   {editedData.upstream_dependencies?.map(tag => (
 //                     <span 
 //                       key={tag.id} 
-//                       // Add a conditional class: 'external' if the system name is not in our suggestions list
 //                       className={`tag-display ${!dependencySuggestions.some(s => s.id === tag.id) ? 'external' : ''}`}
 //                     >
 //                       {tag.text}
@@ -255,7 +270,7 @@
 
 //                 <p><strong>Downstream:</strong></p>
 //                 <div className="dependency-tags-display">
-//                    {editedData.downstream_dependencies?.map(tag => (
+//                   {editedData.downstream_dependencies?.map(tag => (
 //                     <span 
 //                       key={tag.id} 
 //                       className={`tag-display ${!dependencySuggestions.some(s => s.id === tag.id) ? 'external' : ''}`}
@@ -264,12 +279,9 @@
 //                     </span>
 //                   ))}
 //                 </div>
-//                 <p>
-//                   <strong>Key Contacts:</strong> {editedData.key_contacts}
-//                 </p>
-//                 <p>
-//                   <strong>Source:</strong> {editedData.source_reference}
-//                 </p>
+
+//                 <p><strong>Key Contacts:</strong> {editedData.key_contacts}</p>
+//                 <p><strong>Source:</strong> {editedData.source_reference}</p>
 
 //                 {editedData.is_approved &&
 //                   editedData.approved_by &&
@@ -395,32 +407,93 @@ function MyApplications({ setView }) {
   };
 
   const handleSave = async () => {
-    const body = JSON.stringify({
-      dr_data: editedData.dr_data,
-      upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
-      downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
-      key_contacts: editedData.key_contacts.split(",").map((c) => c.trim()),
-      source_reference: editedData.source_reference,
-      system_type: editedData.system_type,
-    });
+    if (!editedData.dr_data.trim()) {
+      alert("DR Data cannot be empty.");
+      return;
+    }
 
-    const res = await fetch(
-      `http://localhost:8000/api/v1/validation/systems/${selectedSystemId}/update`,
-      {
+    const confirmEdit = window.confirm("Are you sure you want to save the changes?");
+    if (!confirmEdit) return;
+
+    try {
+      const url = user.role === "admin"
+        ? `http://localhost:8000/api/v1/admin/systems/${selectedSystemId}/update`
+        : `http://localhost:8000/api/v1/validation/systems/${selectedSystemId}/update`;
+
+      const payload = {
+        dr_data: editedData.dr_data,
+        system_type: editedData.system_type,
+        source_reference: editedData.source_reference || null,
+        upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
+        downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
+        key_contacts: editedData.key_contacts
+          .split(",")
+          .map(d => d.trim())
+          .filter(Boolean),
+      };
+
+      // First try without force_external
+      let res = await fetch(url, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: body
+        body: JSON.stringify(payload),
+      });
+
+      // If we get an error about external dependencies, ask for confirmation
+      if (!res.ok) {
+        const errorData = await res.json();
+        if (errorData.detail && errorData.detail.includes('Set force_external=true')) {
+          const confirmExternal = window.confirm(
+            `${errorData.detail}\n\nDo you want to proceed with these external dependencies?`
+          );
+          
+          if (confirmExternal) {
+            // Try again with force_external=true
+            const urlWithForce = `${url}?force_external=true`;
+            res = await fetch(urlWithForce, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(payload),
+            });
+          } else {
+            return; // User canceled
+          }
+        }
       }
-    );
-    if (res.ok) {
-      alert("Updated");
-      fetchSystems(expandedAppId);
-      setEditMode(false);
-    } else {
-      alert("Update failed");
+
+      if (res.ok) {
+        const updated = await res.json();
+        alert("System updated successfully!");
+        setEditMode(false);
+        fetchSystems(expandedAppId);
+        
+        // Update the selected system data if it's the one we just updated
+        if (selectedSystemId === updated.id) {
+          setEditedData({
+            dr_data: updated.dr_data || "",
+            upstream_dependencies: updated.upstream_dependencies?.map(d => ({ id: d, text: d })) || [],
+            downstream_dependencies: updated.downstream_dependencies?.map(d => ({ id: d, text: d })) || [],
+            key_contacts: updated.key_contacts?.join(", ") || "",
+            source_reference: updated.source_reference || "",
+            system_type: updated.system_type || "internal",
+            approved_by: updated.approved_by,
+            approved_at: updated.approved_at,
+            is_approved: updated.is_approved,
+          });
+        }
+      } else {
+        const errorData = await res.json();
+        alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("Error occurred during update.");
     }
   };
 
