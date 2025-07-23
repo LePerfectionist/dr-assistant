@@ -6,16 +6,26 @@ import {
   PieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  LabelList,
+  ResponsiveContainer
 } from "recharts";
 import "./Dashboard.css";
 
 function Dashboard() {
   const { user, token } = useAuth();
-  const [summary, setSummary] = useState({ apps: 0, users: 0, pending: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [summary, setSummary] = useState({ 
+    apps: 0, 
+    users: 0, 
+    pending: 0,
+    dueForReapproval: 0 
+  });
   const [apps, setApps] = useState([]);
   const [systems, setSystems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,13 +33,32 @@ function Dashboard() {
   const [monthRange, setMonthRange] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterCriticality, setFilterCriticality] = useState("");
+  const [filterSystemType, setFilterSystemType] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSystem, setSelectedSystem] = useState(null);
+  
   const systemsPerPage = 8;
   const isAdmin = user?.role === "admin";
 
+  const fetchSystemStatus = async (systemId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/v1/validation/systems/${systemId}/status`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) throw new Error("Failed to fetch status");
+      const data = await response.json();
+      return data.status;
+    } catch (error) {
+      console.error("Error fetching system status:", error);
+      return "Approved";
+    }
+  };
+
   const fetchSummary = async () => {
     try {
+      setIsLoading(true);
+      
       const appsRes = await fetch(
         isAdmin
           ? "http://localhost:8000/api/v1/admin/applications"
@@ -51,9 +80,21 @@ function Dashboard() {
       );
 
       const allSystems = systemsList.flat();
-      setSystems(allSystems);
+      const systemsWithStatus = await Promise.all(
+        allSystems.map(async (system) => {
+          const status = await fetchSystemStatus(system.id);
+          return { 
+            ...system, 
+            currentStatus: status,
+            systemType: system.system_type || "unclassified"
+          };
+        })
+      );
 
-      const pending = allSystems.filter((s) => !s.is_approved).length;
+      setSystems(systemsWithStatus);
+
+      const pendingCount = systemsWithStatus.filter(s => s.currentStatus === "Pending").length;
+      const dueForReapprovalCount = systemsWithStatus.filter(s => s.currentStatus === "Due for Reapproval").length;
 
       const usersRes = isAdmin
         ? await fetch("http://localhost:8000/api/v1/admin/users", {
@@ -62,9 +103,17 @@ function Dashboard() {
         : { json: async () => [] };
 
       const users = await usersRes.json();
-      setSummary({ apps: appsData.length, users: users.length, pending });
+      
+      setSummary({ 
+        apps: appsData.length, 
+        users: users.length, 
+        pending: pendingCount,
+        dueForReapproval: dueForReapprovalCount
+      });
     } catch (err) {
       console.error("Dashboard error", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,13 +121,8 @@ function Dashboard() {
     fetchSummary();
   }, []);
 
-  const getStatus = (s) => {
-    if (!s.is_approved) return "Pending";
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    return new Date(s.approved_at) < sixMonthsAgo
-      ? "Due for Recertification"
-      : "Approved";
+  const getStatus = (system) => {
+    return system.currentStatus || "Approved";
   };
 
   const getCriticalityLevel = (system) => {
@@ -105,10 +149,17 @@ function Dashboard() {
     );
   };
 
+  const getSystemTypeTag = (system) => {
+    const type = system.systemType || "unclassified";
+    return (
+      <span className={`system-type ${type.toLowerCase()}`}>
+        {type.charAt(0).toUpperCase() + type.slice(1)}
+      </span>
+    );
+  };
+
   const filteredSystems = systems
-    .filter((s) =>
-      s.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((s) => s.name?.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter((s) =>
       filterApprover
         ? (s.approved_by || "").toLowerCase().includes(filterApprover.toLowerCase())
@@ -129,6 +180,10 @@ function Dashboard() {
     .filter((s) => {
       if (!filterCriticality) return true;
       return getCriticalityLevel(s) === filterCriticality;
+    })
+    .filter((s) => {
+      if (!filterSystemType) return true;
+      return s.systemType === filterSystemType.toLowerCase();
     });
 
   const paginatedSystems = filteredSystems.slice(
@@ -136,129 +191,186 @@ function Dashboard() {
     currentPage * systemsPerPage
   );
 
-  const pieData = [
-    {
-      name: "Approved",
-      value: systems.filter((s) => getStatus(s) === "Approved").length,
-    },
-    {
-      name: "Pending",
-      value: systems.filter((s) => getStatus(s) === "Pending").length,
-    },
-    {
-      name: "Due for Recertification",
-      value: systems.filter(
-        (s) => getStatus(s) === "Due for Recertification"
-      ).length,
-    },
+  const statusChartData = [
+    { name: "Approved", value: filteredSystems.filter(s => getStatus(s) === "Approved").length, color: "#4CAF50" },
+    { name: "Pending", value: filteredSystems.filter(s => getStatus(s) === "Pending").length, color: "#F44336" },
+    { name: "Due for Reapproval", value: filteredSystems.filter(s => getStatus(s) === "Due for Reapproval").length, color: "#FF9800" }
   ];
 
-  const criticalityData = [
-    {
-      name: "Low",
-      value: systems.filter((s) => getCriticalityLevel(s) === "Low").length,
-    },
-    {
-      name: "Medium",
-      value: systems.filter((s) => getCriticalityLevel(s) === "Medium").length,
-    },
-    {
-      name: "High",
-      value: systems.filter((s) => getCriticalityLevel(s) === "High").length,
-    },
-    {
-      name: "Critical",
-      value: systems.filter((s) => getCriticalityLevel(s) === "Critical").length,
-    },
+  const criticalityChartData = [
+    { name: "Low", value: filteredSystems.filter(s => getCriticalityLevel(s) === "Low").length, color: "#A4C52E" },
+    { name: "Medium", value: filteredSystems.filter(s => getCriticalityLevel(s) === "Medium").length, color: "#FFEB3B" },
+    { name: "High", value: filteredSystems.filter(s => getCriticalityLevel(s) === "High").length, color: "#FF9800" },
+    { name: "Critical", value: filteredSystems.filter(s => getCriticalityLevel(s) === "Critical").length, color: "#F44336" }
   ];
+
+  const systemTypeChartData = [
+    { name: "Internal", value: filteredSystems.filter(s => s.systemType === "internal").length, color: "#2196F3" },
+    { name: "External", value: filteredSystems.filter(s => s.systemType === "external").length, color: "#9C27B0" },
+    { name: "Unclassified", value: filteredSystems.filter(s => !s.systemType || s.systemType === "unclassified").length, color: "#607D8B" }
+  ];
+
+  const handleStatusFilterChange = (e) => {
+    setFilterStatus(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "--";
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="dashboard-container">
+        <div className="loading-spinner">Loading dashboard data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
       <h1>📊 Dashboard</h1>
 
-      {/* ✅ CHARTS AT TOP */}
-      <div className="chart-section dual-charts">
-        <ResponsiveContainer width="50%" height={300}>
-          <PieChart>
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="name"
-              outerRadius={100}
-              label
-            >
-              {pieData.map((entry, index) => (
-                <Cell
-                  key={`cell-status-${index}`}
-                  fill={["#4caf50", "#f44336", "#ff9800"][index % 3]}
-                />
-              ))}
-              <LabelList dataKey="name" position="outside" />
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className="chart-row">
+        {/* Status Pie Chart */}
+        <div className="chart-wrapper">
+          <h3>System Status</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={statusChartData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={80}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {statusChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value, name) => [`${value} systems`, name]} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-        <ResponsiveContainer width="50%" height={300}>
-          <PieChart>
-            <Pie
-              data={criticalityData}
-              dataKey="value"
-              nameKey="name"
-              outerRadius={100}
-              label
-            >
-              {criticalityData.map((entry, index) => (
-                <Cell
-                  key={`cell-criticality-${index}`}
-                  fill={["#a4c52eff", "#ffeb3b", "#ff9800", "#f44336"][index % 4]}
-                />
-              ))}
-              <LabelList dataKey="name" position="outside" />
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+        {/* Criticality Bar Chart */}
+        <div className="chart-wrapper">
+          <h3>System Criticality</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={criticalityChartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" name="Systems">
+                  {criticalityChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* System Type Pie Chart */}
+        <div className="chart-wrapper">
+          <h3>System Type</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={systemTypeChartData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={80}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {systemTypeChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="summary-cards">
-        <div className="card">🗂 Applications: {summary.apps}</div>
-        {isAdmin && <div className="card">👥 Users: {summary.users}</div>}
-        <div className="card">📌 Pending Systems: {summary.pending}</div>
+        <div className="card">
+          <span className="card-icon">🗂</span>
+          <span className="card-value">{summary.apps}</span>
+          <span className="card-label">Applications</span>
+        </div>
+        {isAdmin && (
+          <div className="card">
+            <span className="card-icon">👥</span>
+            <span className="card-value">{summary.users}</span>
+            <span className="card-label">Users</span>
+          </div>
+        )}
+        <div className="card">
+          <span className="card-icon">📌</span>
+          <span className="card-value">{summary.pending}</span>
+          <span className="card-label">Pending</span>
+        </div>
+        <div className="card">
+          <span className="card-icon">⚠️</span>
+          <span className="card-value">{summary.dueForReapproval}</span>
+          <span className="card-label">Due for Reapproval</span>
+        </div>
       </div>
 
-      {/* Filters */}
       <div className="dashboard-filters">
         <input
           type="text"
           placeholder="🔍 Search system"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          className="filter-input"
         />
         <input
           type="text"
-          placeholder="👤 Approver"
+          placeholder="👤 Filter by approver"
           value={filterApprover}
           onChange={(e) => setFilterApprover(e.target.value)}
+          className="filter-input"
         />
-        <select value={monthRange} onChange={(e) => setMonthRange(e.target.value)}>
+        <select 
+          value={monthRange} 
+          onChange={(e) => setMonthRange(e.target.value)}
+          className="filter-select"
+        >
           <option value="">All Time</option>
           <option value="3">Last 3 Months</option>
           <option value="6">Last 6 Months</option>
           <option value="12">Last 12 Months</option>
         </select>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+        <select 
+          value={filterStatus} 
+          onChange={handleStatusFilterChange}
+          className="filter-select"
+        >
           <option value="">All Statuses</option>
           <option value="Pending">Pending</option>
           <option value="Approved">Approved</option>
-          <option value="Due for Recertification">Due for Reapproval</option>
+          <option value="Due for Reapproval">Due for Reapproval</option>
         </select>
         <select
           value={filterCriticality}
           onChange={(e) => setFilterCriticality(e.target.value)}
+          className="filter-select"
         >
           <option value="">All Criticalities</option>
           <option value="Low">Low (1)</option>
@@ -266,70 +378,111 @@ function Dashboard() {
           <option value="High">High (3)</option>
           <option value="Critical">Critical (4)</option>
         </select>
+        <select
+          value={filterSystemType}
+          onChange={(e) => setFilterSystemType(e.target.value)}
+          className="filter-select"
+        >
+          <option value="">All Types</option>
+          <option value="internal">Internal</option>
+          <option value="external">External</option>
+          <option value="unclassified">Unclassified</option>
+        </select>
       </div>
 
-      {/* Systems Table */}
-      <table>
-        <thead>
-          <tr>
-            <th>System</th>
-            <th>Status</th>
-            <th>Criticality</th>
-            <th>Last Approved</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedSystems.length === 0 ? (
+      <div className="systems-table-container">
+        <table className="systems-table">
+          <thead>
             <tr>
-              <td colSpan="5">No systems found</td>
+              <th>System</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Criticality</th>
+              <th>Last Approved</th>
+              <th>Approved By</th>
+              <th>Actions</th>
             </tr>
-          ) : (
-            paginatedSystems.map((s) => (
-              <tr key={s.id}>
-                <td>{s.name}</td>
-                <td>{getStatus(s)}</td>
-                <td>{getCriticalityTag(s)}</td>
-                <td>
-                  {s.approved_at
-                    ? new Date(s.approved_at).toLocaleString()
-                    : "--"}
-                </td>
-                <td>
-                  <button onClick={() => setSelectedSystem(s)}>✏️ Edit</button>
+          </thead>
+          <tbody>
+            {paginatedSystems.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="no-systems-message">
+                  No systems found matching your filters
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-
-      {/* Pagination */}
-      <div className="pagination">
-        {Array.from(
-          { length: Math.ceil(filteredSystems.length / systemsPerPage) },
-          (_, i) => i + 1
-        ).map((n) => (
-          <button
-            key={n}
-            onClick={() => setCurrentPage(n)}
-            className={n === currentPage ? "active-page" : ""}
-          >
-            {n}
-          </button>
-        ))}
+            ) : (
+              paginatedSystems.map((system) => (
+                <tr key={system.id}>
+                  <td>{system.name}</td>
+                  <td>{getSystemTypeTag(system)}</td>
+                  <td>
+                    <span className={`status-badge ${getStatus(system).toLowerCase().replace(/\s+/g, '-')}`}>
+                      {getStatus(system)}
+                    </span>
+                  </td>
+                  <td>{getCriticalityTag(system)}</td>
+                  <td>
+                    {formatDateTime(system.approved_at)}
+                  </td>
+                  <td>{system.approved_by || "--"}</td>
+                  <td>
+                    <button 
+                      onClick={() => setSelectedSystem(system)}
+                      className="edit-button"
+                    >
+                      ✏️ Edit
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal for Detail */}
+      {filteredSystems.length > systemsPerPage && (
+        <div className="pagination">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          
+          {Array.from(
+            { length: Math.ceil(filteredSystems.length / systemsPerPage) },
+            (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={currentPage === i + 1 ? "active-page" : ""}
+              >
+                {i + 1}
+              </button>
+            )
+          )}
+          
+          <button
+            onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(filteredSystems.length / systemsPerPage)))}
+            disabled={currentPage === Math.ceil(filteredSystems.length / systemsPerPage)}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       {selectedSystem && (
         <Modal
-          title={selectedSystem.name}
+          title={`System: ${selectedSystem.name}`}
           onClose={() => setSelectedSystem(null)}
         >
           <SystemDetail
             system={selectedSystem}
             user={user}
-            onApprove={() => fetchSummary()}
+            onApprove={() => {
+              fetchSummary();
+              setSelectedSystem(null);
+            }}
             onUpdate={() => {
               fetchSummary();
               setSelectedSystem(null);
