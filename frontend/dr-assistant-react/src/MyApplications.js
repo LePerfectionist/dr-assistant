@@ -407,48 +407,70 @@ function MyApplications({ setView }) {
   };
 
   const handleSave = async () => {
-    if (!editedData.dr_data.trim()) {
-      alert("DR Data cannot be empty.");
-      return;
-    }
+  if (!editedData.dr_data.trim()) {
+    alert("DR Data cannot be empty.");
+    return;
+  }
 
-    const confirmEdit = window.confirm("Are you sure you want to save the changes?");
-    if (!confirmEdit) return;
+  const confirmEdit = window.confirm("Are you sure you want to save the changes?");
+  if (!confirmEdit) return;
 
-    try {
-      const url = user.role === "admin"
-        ? `http://localhost:8000/api/v1/admin/systems/${selectedSystemId}/update`
-        : `http://localhost:8000/api/v1/validation/systems/${selectedSystemId}/update`;
+  try {
+    const url = user.role === "admin"
+      ? `http://localhost:8000/api/v1/admin/systems/${selectedSystemId}/update`
+      : `http://localhost:8000/api/v1/validation/systems/${selectedSystemId}/update`;
 
-      const payload = {
-        dr_data: editedData.dr_data,
-        system_type: editedData.system_type,
-        source_reference: editedData.source_reference || null,
-        upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
-        downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
-        key_contacts: editedData.key_contacts
-          .split(",")
-          .map(d => d.trim())
-          .filter(Boolean),
-      };
+    const payload = {
+      dr_data: editedData.dr_data,
+      system_type: editedData.system_type,
+      source_reference: editedData.source_reference || null,
+      upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
+      downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
+      key_contacts: editedData.key_contacts
+        .split(",")
+        .map(d => d.trim())
+        .filter(Boolean),
+    };
 
-      // First try without force_external
-      let res = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+    // First try without force_external
+    let res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-      // If we get an error about external dependencies, ask for confirmation
-      if (!res.ok) {
-        const errorData = await res.json();
-        if (errorData.detail && errorData.detail.includes('Set force_external=true')) {
-          const confirmExternal = window.confirm(
-            `${errorData.detail}\n\nDo you want to proceed with these external dependencies?`
-          );
+    // If we get an error about external dependencies, ask for confirmation
+    if (!res.ok) {
+      const errorData = await res.json();
+      if (errorData.detail && errorData.detail.includes('Set force_external=true')) {
+        // Find all external dependencies
+        const currentSystemNames = systemsMap[expandedAppId]?.map(sys => sys.name) || [];
+        
+        const externalUpstream = editedData.upstream_dependencies
+          .filter(tag => !currentSystemNames.includes(tag.text))
+          .map(tag => tag.text);
+        
+        const externalDownstream = editedData.downstream_dependencies
+          .filter(tag => !currentSystemNames.includes(tag.text))
+          .map(tag => tag.text);
+
+        if (externalUpstream.length > 0 || externalDownstream.length > 0) {
+          let confirmationMessage = "You're adding external dependencies:\n\n";
+          
+          if (externalUpstream.length > 0) {
+            confirmationMessage += `Upstream:\n${externalUpstream.join('\n')}\n\n`;
+          }
+          
+          if (externalDownstream.length > 0) {
+            confirmationMessage += `Downstream:\n${externalDownstream.join('\n')}\n\n`;
+          }
+          
+          confirmationMessage += "Do you want to proceed with these external dependencies?";
+
+          const confirmExternal = window.confirm(confirmationMessage);
           
           if (confirmExternal) {
             // Try again with force_external=true
@@ -466,36 +488,37 @@ function MyApplications({ setView }) {
           }
         }
       }
-
-      if (res.ok) {
-        const updated = await res.json();
-        alert("System updated successfully!");
-        setEditMode(false);
-        fetchSystems(expandedAppId);
-        
-        // Update the selected system data if it's the one we just updated
-        if (selectedSystemId === updated.id) {
-          setEditedData({
-            dr_data: updated.dr_data || "",
-            upstream_dependencies: updated.upstream_dependencies?.map(d => ({ id: d, text: d })) || [],
-            downstream_dependencies: updated.downstream_dependencies?.map(d => ({ id: d, text: d })) || [],
-            key_contacts: updated.key_contacts?.join(", ") || "",
-            source_reference: updated.source_reference || "",
-            system_type: updated.system_type || "internal",
-            approved_by: updated.approved_by,
-            approved_at: updated.approved_at,
-            is_approved: updated.is_approved,
-          });
-        }
-      } else {
-        const errorData = await res.json();
-        alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
-      }
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("Error occurred during update.");
     }
-  };
+
+    if (res.ok) {
+      const updated = await res.json();
+      alert("System updated successfully!");
+      setEditMode(false);
+      fetchSystems(expandedAppId);
+      
+      // Update the selected system data if it's the one we just updated
+      if (selectedSystemId === updated.id) {
+        setEditedData({
+          dr_data: updated.dr_data || "",
+          upstream_dependencies: updated.upstream_dependencies?.map(d => ({ id: d, text: d })) || [],
+          downstream_dependencies: updated.downstream_dependencies?.map(d => ({ id: d, text: d })) || [],
+          key_contacts: updated.key_contacts?.join(", ") || "",
+          source_reference: updated.source_reference || "",
+          system_type: updated.system_type || "internal",
+          approved_by: updated.approved_by,
+          approved_at: updated.approved_at,
+          is_approved: updated.is_approved,
+        });
+      }
+    } else {
+      const errorData = await res.json();
+      alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
+    }
+  } catch (err) {
+    alert("Error occurred during update.");
+    console.error("Update error:", err);
+  }
+};
 
   useEffect(() => {
     fetchApplications();
