@@ -194,3 +194,277 @@
   color: #721c24;
   border: 1px dashed #f5c6cb;
 }
+
+/* Add External System Button */
+.create-external-button {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.create-external-button:hover {
+  background-color: #dcfce7;
+  border-color: #86efac;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal Header */
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1f2937;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.modal-close:hover {
+  color: #1f2937;
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Form Actions */
+.form-actions {
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancel {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.btn-submit {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-submit:hover {
+  background-color: #1d4ed8;
+}
+
+/* Panel Header */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.panel-header h3 {
+  margin: 0;
+}
+
+.system-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+  }
+  
+  .system-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .create-external-button,
+  .view-graph-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Base improvements */
+.my-applications {
+  /* Consider using min-height instead of height */
+  min-height: 100vh;
+  height: auto;
+}
+
+/* Better panel responsiveness */
+.applications-layout {
+  flex-direction: column;
+  overflow-x: hidden;
+  height: auto;
+  padding-bottom: 20px;
+}
+
+@media (min-width: 1024px) {
+  .applications-layout {
+    flex-direction: row;
+    height: calc(100vh - 80px);
+  }
+}
+
+/* Panel width adjustments */
+.left-panel,
+.middle-panel,
+.right-panel {
+  min-width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .left-panel {
+    min-width: 260px;
+    max-width: 300px;
+  }
+  .middle-panel {
+    min-width: 350px;
+    max-width: 500px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .right-panel {
+    min-width: 400px;
+  }
+}
+
+/* Better mobile modal handling */
+@media (max-width: 480px) {
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 12px; /* Larger touch targets */
+  }
+}
+
+/* Better mobile buttons */
+@media (max-width: 480px) {
+  .system-detail-panel button {
+    padding: 12px;
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse; /* Submit button on bottom */
+  }
+  
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+  }
+}
+
+/* Prevent textarea zoom on iOS */
+@media (max-width: 480px) {
+  .system-detail-panel textarea {
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+}

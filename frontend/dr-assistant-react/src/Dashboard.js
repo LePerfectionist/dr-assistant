@@ -36,6 +36,16 @@ function Dashboard() {
   const [filterSystemType, setFilterSystemType] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSystem, setSelectedSystem] = useState(null);
+  const [showCreateExternalModal, setShowCreateExternalModal] = useState(false);
+  const [newExternalSystem, setNewExternalSystem] = useState({
+    name: "",
+    applicationId: "",
+    dr_data: "",
+    system_type: "external",
+    upstream_dependencies: [],
+    downstream_dependencies: [],
+    key_contacts: []
+  });
   
   const systemsPerPage = 8;
   const isAdmin = user?.role === "admin";
@@ -114,6 +124,62 @@ function Dashboard() {
       console.error("Dashboard error", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const createExternalSystem = async () => {
+    try {
+      if (!newExternalSystem.name.trim()) {
+        alert("System name cannot be empty");
+        return;
+      }
+
+      if (!newExternalSystem.applicationId) {
+        alert("Please select an application");
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:8000/api/v1/validation/applications/${newExternalSystem.applicationId}/systems/external`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: newExternalSystem.name,
+            system_type: newExternalSystem.system_type,
+            dr_data: newExternalSystem.dr_data || `Manually created external system: ${newExternalSystem.name}`,
+            upstream_dependencies: newExternalSystem.upstream_dependencies,
+            downstream_dependencies: newExternalSystem.downstream_dependencies,
+            key_contacts: newExternalSystem.key_contacts,
+            source_reference: "Manually created via dashboard"
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to create external system");
+      }
+
+      const createdSystem = await response.json();
+      alert(`External system "${createdSystem.name}" created successfully!`);
+      setShowCreateExternalModal(false);
+      setNewExternalSystem({
+        name: "",
+        applicationId: "",
+        dr_data: "",
+        system_type: "external",
+        upstream_dependencies: [],
+        downstream_dependencies: [],
+        key_contacts: []
+      });
+      fetchSummary();
+    } catch (error) {
+      console.error("Error creating external system:", error);
+      alert(`Error: ${error.message}`);
     }
   };
 
@@ -232,6 +298,15 @@ function Dashboard() {
   return (
     <div className="dashboard-container">
       <h1>📊 Dashboard</h1>
+
+      <div className="dashboard-actions">
+        <button 
+          className="create-external-btn"
+          onClick={() => setShowCreateExternalModal(true)}
+        >
+          ➕ Create External System
+        </button>
+      </div>
 
       <div className="chart-row">
         {/* Status Pie Chart */}
@@ -488,6 +563,78 @@ function Dashboard() {
               setSelectedSystem(null);
             }}
           />
+        </Modal>
+      )}
+
+      {/* Create External System Modal */}
+      {showCreateExternalModal && (
+        <Modal
+          title="Create New External System"
+          onClose={() => setShowCreateExternalModal(false)}
+        >
+          <div className="create-external-form">
+            <div className="form-group">
+              <label>System Name</label>
+              <input
+                type="text"
+                value={newExternalSystem.name}
+                onChange={(e) => setNewExternalSystem({...newExternalSystem, name: e.target.value})}
+                placeholder="Enter system name"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Application</label>
+              <select
+                value={newExternalSystem.applicationId}
+                onChange={(e) => setNewExternalSystem({...newExternalSystem, applicationId: e.target.value})}
+              >
+                <option value="">Select Application</option>
+                {apps.map(app => (
+                  <option key={app.id} value={app.id}>
+                    App #{app.id} - {app.user_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>System Type</label>
+              <select
+                value={newExternalSystem.system_type}
+                onChange={(e) => setNewExternalSystem({...newExternalSystem, system_type: e.target.value})}
+              >
+                <option value="external">External</option>
+                <option value="internal">Internal</option>
+                <option value="unclassified">Unclassified</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>DR Data</label>
+              <textarea
+                value={newExternalSystem.dr_data}
+                onChange={(e) => setNewExternalSystem({...newExternalSystem, dr_data: e.target.value})}
+                placeholder="Enter DR data description"
+                rows={4}
+              />
+            </div>
+
+            <div className="form-actions">
+              <button 
+                className="btn-cancel"
+                onClick={() => setShowCreateExternalModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-submit"
+                onClick={createExternalSystem}
+              >
+                Create System
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

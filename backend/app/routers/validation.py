@@ -1,13 +1,14 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from app.database import get_session
-from app.models.system import System
+from app.models.system import System, SystemType, SystemSource
 from app.models.user import User
 from app.models.application import Application
-from app.schema import SystemResponse, SystemUpdate, ApplicationResponse
+from app.schema import SystemResponse, SystemUpdate, ApplicationResponse, SystemCreateAdmin
 from app.routers.auth import get_current_user
 
 router = APIRouter(prefix="/validation", tags=["Validation"])
@@ -26,6 +27,52 @@ def list_systems_for_app(
     db: Session = Depends(get_session),
 ):
     return db.exec(select(System).where(System.application_id == app_id)).all()
+
+# NEW: Endpoint to create external system
+@router.post("/applications/{app_id}/systems/external", response_model=SystemResponse)
+def create_external_system(
+    app_id: int,
+    system_data: SystemCreateAdmin,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    # Check if application exists
+    application = db.get(Application, app_id)
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Check for duplicate system name in this application
+    existing_system = db.exec(
+        select(System)
+        .where(System.application_id == app_id)
+        .where(System.name == system_data.name)
+    ).first()
+    
+    if existing_system:
+        raise HTTPException(
+            status_code=400,
+            detail=f"System with name '{system_data.name}' already exists in this application"
+        )
+    
+    # Create the external system
+    external_system = System.create_external(
+        name=system_data.name,
+        application_id=app_id,
+        system_type=system_data.system_type,
+        dr_data=system_data.dr_data,
+        upstream_dependencies=system_data.upstream_dependencies,
+        downstream_dependencies=system_data.downstream_dependencies,
+        key_contacts=system_data.key_contacts,
+    )
+    
+    # Set additional fields
+    external_system.source_reference = system_data.source_reference
+    
+    db.add(external_system)
+    db.commit()
+    db.refresh(external_system)
+    
+    return external_system
 
 @router.patch("/systems/{system_id}/update", response_model=SystemResponse)
 def update_system(
