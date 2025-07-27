@@ -3,8 +3,6 @@ import { useAuth } from "./AuthContext";
 import ReactMarkdown from "react-markdown";
 import DependencyInput from './DependencyInput';
 import "./MyApplications.css";
-<meta name="viewport" content="width=device-width, initial-scale=1"></meta>
-
 function MyApplications({ setView }) {
   const { user, token } = useAuth();
   const [applications, setApplications] = useState([]);

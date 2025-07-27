@@ -8,7 +8,7 @@ import AnalysisPage from "./AnalysisPage";
 import MainApp from "./MainApp";
 import MyApplications from "./MyApplications";
 import "./App.css";
-
+import './responsive.css';
 function AppContent() {
   const { user, logout } = useAuth();
   const [view, setView] = useState("home");

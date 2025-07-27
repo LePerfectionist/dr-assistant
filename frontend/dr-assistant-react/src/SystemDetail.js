@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import DependencyInput from './DependencyInput';
 import "./SystemDetail.css";
 
-function SystemDetail({ system, user, onApprove, onUpdate }) {
+function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
   const [editMode, setEditMode] = useState(false);
   const [editedData, setEditedData] = useState({
     dr_data: "",
@@ -16,6 +15,7 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
   });
   const [dependencySuggestions, setDependencySuggestions] = useState([]);
   const [showSourceBadge, setShowSourceBadge] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (system) {
@@ -28,10 +28,16 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
         system_type: system.system_type || "internal",
       });
       
-      // Show source badge if system is manually created
       setShowSourceBadge(system.source === "manually_created");
+      
+      // Set dependency suggestions from all systems
+      if (allSystems) {
+        setDependencySuggestions(
+          allSystems.map(sys => ({ id: sys.name, text: sys.name }))
+        );
+      }
     }
-  }, [system]);
+  }, [system, allSystems]);
 
   const canEdit = user?.role === "admin" || user?.role === "checker";
   const canApprove = canEdit;
@@ -45,48 +51,111 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
   };
 
   const handleSave = async () => {
-    if (!editedData.dr_data.trim()) {
-      alert("DR Data cannot be empty.");
-      return;
-    }
+  if (!editedData.dr_data.trim()) {
+    alert("DR Data cannot be empty.");
+    return;
+  }
 
-    const confirmEdit = window.confirm("Are you sure you want to save the changes?");
-    if (!confirmEdit) return;
+  const confirmEdit = window.confirm("Are you sure you want to save the changes?");
+  if (!confirmEdit) return;
 
-    try {
-      const url = user.role === "admin"
-        ? `http://localhost:8000/api/v1/admin/systems/${system.id}/update`
-        : `http://localhost:8000/api/v1/validation/systems/${system.id}/update`;
+  setLoading(true);
 
-      const payload = {
-        dr_data: editedData.dr_data,
-        system_type: editedData.system_type,
-        source_reference: editedData.source_reference || null,
-        upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
-        downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
-        key_contacts: editedData.key_contacts
-          .split(",")
-          .map(d => d.trim())
-          .filter(Boolean),
-      };
+  try {
+    const url = user.role === "admin"
+      ? `http://localhost:8000/api/v1/admin/systems/${system.id}/update`
+      : `http://localhost:8000/api/v1/validation/systems/${system.id}/update`;
 
-      // First try without force_external
-      let res = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+    const payload = {
+      dr_data: editedData.dr_data,
+      system_type: editedData.system_type,
+      source_reference: editedData.source_reference || null,
+      upstream_dependencies: editedData.upstream_dependencies.map(tag => tag.text),
+      downstream_dependencies: editedData.downstream_dependencies.map(tag => tag.text),
+      key_contacts: editedData.key_contacts
+        .split(",")
+        .map(d => d.trim())
+        .filter(Boolean),
+    };
 
-      // If we get an error about external dependencies, ask for confirmation
-      if (!res.ok) {
-        const errorData = await res.json();
-        if (errorData.detail && errorData.detail.includes('Set force_external=true')) {
-          const confirmExternal = window.confirm(
-            `${errorData.detail}\n\nDo you want to proceed with these external dependencies?`
-          );
+    // First try without force_external
+    let res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // If we get an error about external dependencies, handle it
+    if (!res.ok) {
+      const errorData = await res.json();
+      if (errorData.detail && errorData.detail.includes('Set force_external=true')) {
+        // Get all system names in the application
+        const currentSystemNames = allSystems?.map(sys => sys.name) || [];
+        
+        // Get current dependencies from the system being edited
+        const currentUpstream = system.upstream_dependencies || [];
+        const currentDownstream = system.downstream_dependencies || [];
+        
+        // Find only NEWLY added external dependencies
+        const newExternalUpstream = editedData.upstream_dependencies
+          .filter(tag => 
+            !currentSystemNames.includes(tag.text) && // Is external
+            !currentUpstream.includes(tag.text)       // Is newly added
+          )
+          .map(tag => tag.text);
+        
+        const newExternalDownstream = editedData.downstream_dependencies
+          .filter(tag => 
+            !currentSystemNames.includes(tag.text) && // Is external
+            !currentDownstream.includes(tag.text)     // Is newly added
+          )
+          .map(tag => tag.text);
+
+        // Find existing external dependencies that are being kept
+        const existingExternalUpstream = editedData.upstream_dependencies
+          .filter(tag => 
+            !currentSystemNames.includes(tag.text) && // Is external
+            currentUpstream.includes(tag.text)       // Already existed
+          )
+          .map(tag => tag.text);
+        
+        const existingExternalDownstream = editedData.downstream_dependencies
+          .filter(tag => 
+            !currentSystemNames.includes(tag.text) && // Is external
+            currentDownstream.includes(tag.text)      // Already existed
+          )
+          .map(tag => tag.text);
+
+        if (newExternalUpstream.length > 0 || newExternalDownstream.length > 0) {
+          let confirmationMessage = "You're adding NEW external dependencies:\n\n";
+          
+          if (newExternalUpstream.length > 0) {
+            confirmationMessage += `New Upstream:\n${newExternalUpstream.join('\n')}\n\n`;
+          }
+          
+          if (newExternalDownstream.length > 0) {
+            confirmationMessage += `New Downstream:\n${newExternalDownstream.join('\n')}\n\n`;
+          }
+
+          // Only show existing if there are any
+          if (existingExternalUpstream.length > 0 || existingExternalDownstream.length > 0) {
+            confirmationMessage += "The following existing external dependencies will be kept:\n";
+            
+            if (existingExternalUpstream.length > 0) {
+              confirmationMessage += `Upstream:\n${existingExternalUpstream.join('\n')}\n\n`;
+            }
+            
+            if (existingExternalDownstream.length > 0) {
+              confirmationMessage += `Downstream:\n${existingExternalDownstream.join('\n')}\n\n`;
+            }
+          }
+          
+          confirmationMessage += "Do you want to proceed with these changes?";
+
+          const confirmExternal = window.confirm(confirmationMessage);
           
           if (confirmExternal) {
             // Try again with force_external=true
@@ -104,21 +173,24 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
           }
         }
       }
-
-      if (res.ok) {
-        const updated = await res.json();
-        alert("System updated successfully!");
-        setEditMode(false);
-        onUpdate && onUpdate(updated);
-      } else {
-        const errorData = await res.json();
-        alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
-      }
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("Error occurred during update.");
     }
-  };
+
+    if (res.ok) {
+      const updated = await res.json();
+      alert("System updated successfully!");
+      setEditMode(false);
+      onUpdate && onUpdate(updated);
+    } else {
+      const errorData = await res.json();
+      alert(`Update failed: ${errorData.detail || 'Unknown error'}`);
+    }
+  } catch (err) {
+    console.error("Update error:", err);
+    alert("Error occurred during update.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleApproveClick = async () => {
     const confirm = window.confirm(
@@ -127,6 +199,8 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
         : "Are you sure you want to approve this system?"
     );
     if (!confirm) return;
+
+    setLoading(true);
 
     try {
       const url = user.role === "admin"
@@ -149,6 +223,8 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
     } catch (err) {
       console.error(err);
       alert("Approval error.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -238,8 +314,20 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
           </div>
 
           <div className="button-group">
-            <button className="btn-save" onClick={handleSave}>💾 Save</button>
-            <button className="btn-cancel" onClick={() => setEditMode(false)}>Cancel</button>
+            <button 
+              className="btn-save" 
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : '💾 Save'}
+            </button>
+            <button 
+              className="btn-cancel" 
+              onClick={() => setEditMode(false)}
+              disabled={loading}
+            >
+              Cancel
+            </button>
           </div>
         </>
       ) : (
@@ -257,7 +345,12 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
               <div className="dependency-tags-display">
                 {system.upstream_dependencies?.length ? (
                   system.upstream_dependencies.map((dep, index) => (
-                    <span key={index} className="tag-display">
+                    <span 
+                      key={index} 
+                      className={`tag-display ${
+                        allSystems?.some(s => s.name === dep) ? '' : 'external'
+                      }`}
+                    >
                       {dep}
                     </span>
                   ))
@@ -272,7 +365,12 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
               <div className="dependency-tags-display">
                 {system.downstream_dependencies?.length ? (
                   system.downstream_dependencies.map((dep, index) => (
-                    <span key={index} className="tag-display">
+                    <span 
+                      key={index} 
+                      className={`tag-display ${
+                        allSystems?.some(s => s.name === dep) ? '' : 'external'
+                      }`}
+                    >
                       {dep}
                     </span>
                   ))
@@ -318,7 +416,11 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
 
           <div className="action-buttons">
             {canEdit && (
-              <button className="btn-edit" onClick={() => setEditMode(true)}>
+              <button 
+                className="btn-edit" 
+                onClick={() => setEditMode(true)}
+                disabled={loading}
+              >
                 ✏️ Edit
               </button>
             )}
@@ -326,8 +428,9 @@ function SystemDetail({ system, user, onApprove, onUpdate }) {
               <button
                 className={`btn-approve ${system.is_approved ? "approved" : ""}`}
                 onClick={handleApproveClick}
+                disabled={loading}
               >
-                {system.is_approved ? "🔁 Re-Approve" : "✅ Approve"}
+                {loading ? 'Processing...' : system.is_approved ? "🔁 Re-Approve" : "✅ Approve"}
               </button>
             )}
           </div>

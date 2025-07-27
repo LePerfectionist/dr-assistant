@@ -79,3 +79,29 @@
   background-color: #d0ebff;
   font-weight: bold;
 }
+
+/* ===== Upload.css - Responsive Additions ===== */
+@media (max-width: 768px) {
+  .upload-box {
+    padding: 12px;
+    border-width: 1px;
+    margin: 0 -16px;
+    border-radius: 0;
+  }
+
+  .upload-label {
+    font-size: 14px;
+  }
+
+  .file-name {
+    font-size: 13px;
+  }
+}
+
+/* Touch target optimization */
+.upload-label {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

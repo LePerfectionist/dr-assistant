@@ -246,3 +246,12 @@ li {
 .form-group {
   position: relative;
 }
+.tag-display.external {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px dashed #f5c6cb;
+}
+.tag-display {
+  background-color: #e9ecef;
+  color: #495057;
+}
