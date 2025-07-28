@@ -49,6 +49,10 @@ function MyApplications({ setView }) {
   };
 
   const createExternalSystem = async () => {
+    const confirm = window.confirm(
+    `Are you sure you want to create an external system named "${newExternalSystem.name}"?`
+  );
+  if (!confirm) return;
     try {
       if (!newExternalSystem.name.trim()) {
         alert("System name cannot be empty");
@@ -280,6 +284,8 @@ function MyApplications({ setView }) {
     <div className="my-applications">
       <h2>📂 All Applications</h2>
       <div className="applications-layout">
+
+         
         {/* Left Panel: Application List */}
         <div className="left-panel">
           {applications.map((app) => (
@@ -291,6 +297,18 @@ function MyApplications({ setView }) {
             </div>
           ))}
         </div>
+
+           {/* Placeholder Panel (only if no app is selected) */}
+      {!expandedAppId && (
+        <div className="right-panel placeholder-panel">
+          <div className="placeholder-box">
+            <div className="placeholder-icon">📄</div>
+            <div className="placeholder-text">
+              Please select an application to view systems and details.
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* Middle Panel: Systems */}
         {expandedAppId && systemsMap[expandedAppId] && (

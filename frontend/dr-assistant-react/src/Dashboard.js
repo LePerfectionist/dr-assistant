@@ -128,6 +128,10 @@ function Dashboard() {
   };
 
   const createExternalSystem = async () => {
+      const confirm = window.confirm(
+    `Are you sure you want to create an external system named "${newExternalSystem.name}"?`
+  );
+  if (!confirm) return;
     try {
       if (!newExternalSystem.name.trim()) {
         alert("System name cannot be empty");

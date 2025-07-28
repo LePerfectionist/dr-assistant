@@ -246,7 +246,7 @@ function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
           </span>
         )}
       </div>
-      <p><b>Application ID:</b> #{system.application_id}</p>
+      {/* <p><b>Application ID:</b> #{system.application_id}</p> */}
       {system.uploaded_by && <p><b>Uploaded By:</b> {system.uploaded_by}</p>}
 
       {editMode ? (

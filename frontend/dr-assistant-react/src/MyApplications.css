@@ -19,6 +19,7 @@
   height: calc(100vh - 80px);
 }
 
+
 /* Panels */
 .left-panel,
 .middle-panel,
@@ -467,4 +468,42 @@
   .system-detail-panel textarea {
     font-size: 16px; /* Prevents iOS zoom */
   }
+}
+
+.placeholder-panel {
+  flex: 1;
+  background: #fbfbfb;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* align to top */
+  padding: 40px 20px;       /* top spacing */
+  overflow-y: auto;         /* in case of small screens */
+  border-left: 1px solid #ddd;
+  height: 100%;             /* ensure full height for flex layout */
+  box-sizing: border-box;
+}
+
+.placeholder-box {
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  padding: 32px;
+  margin-top: 40px;          /* visually separate from very top */
+  border: 2px dashed #bbb;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #7f9cf5;
+}
+
+.placeholder-text {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.6;
+  font-weight: 500;
 }
