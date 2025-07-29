@@ -1,0 +1,34 @@
+Backend:
+
+1. Change of models : Application, Systems
+    1.1. Application now has name parameter
+    1.2. System can now be part of multiple Applications
+
+2. Normal user (non-checker)
+    2.1. New login endpoint
+    2.2. Endpoints for viewing sytems/apllication
+    2.3. Endpoint for raising update request
+
+3. Chatbot
+
+4. Graph endpoint to include filter by Application name/LOV
+
+
+Frontend:
+
+1. First page should be login, not register
+
+2. Dashboard
+    2.1. Dashboard should be named "Home", landing page after login
+    2.2. UI Changes
+
+3. New application
+    3.1. Application name should be asked first, before uploading runbook
+    3.3. Application saved along with name/LOV
+    3.4. Editing dependecies should have the same alert search as My Applications page
+        3.4.1 Should automatically create External system, instead of manually adding
+
+4. User module
+    1. Registration and Login option for normal users
+    2. Normal user dashboard (simple)
+    3. Raise update request
