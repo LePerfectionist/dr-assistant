@@ -16,11 +16,11 @@ Backend:
 
 Frontend:
 
-1. First page should be login, not register
+1. First page should be login, not register - "Done"
 
 2. Dashboard
-    2.1. Dashboard should be named "Home", landing page after login
-    2.2. UI Changes
+    2.1. Dashboard should be named "Home", landing page after login - "Done"
+    2.2. UI Changes - "Done"
 
 3. New application
     3.1. Application name should be asked first, before uploading runbook

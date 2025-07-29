@@ -315,7 +315,7 @@ function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1>📊 Dashboard</h1>
+      <h1>📊 Home</h1>
 
       <div className="dashboard-actions">
         <button 
@@ -324,6 +324,31 @@ function Dashboard() {
         >
           ➕ Create External System
         </button>
+      </div>
+
+    <div className="summary-cards">
+        <div className="card">
+          <span className="card-icon">🗂</span>
+          <span className="card-value">{summary.apps}</span>
+          <span className="card-label">Applications</span>
+        </div>
+        {isAdmin && (
+          <div className="card">
+            <span className="card-icon">👥</span>
+            <span className="card-value">{summary.users}</span>
+            <span className="card-label">Users</span>
+          </div>
+        )}
+        <div className="card">
+          <span className="card-icon">📌</span>
+          <span className="card-value">{summary.pending}</span>
+          <span className="card-label">Pending</span>
+        </div>
+        <div className="card">
+          <span className="card-icon">⚠️</span>
+          <span className="card-value">{summary.dueForReapproval}</span>
+          <span className="card-label">Due for Reapproval</span>
+        </div>
       </div>
 
       <div className="chart-row">
@@ -400,30 +425,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="summary-cards">
-        <div className="card">
-          <span className="card-icon">🗂</span>
-          <span className="card-value">{summary.apps}</span>
-          <span className="card-label">Applications</span>
-        </div>
-        {isAdmin && (
-          <div className="card">
-            <span className="card-icon">👥</span>
-            <span className="card-value">{summary.users}</span>
-            <span className="card-label">Users</span>
-          </div>
-        )}
-        <div className="card">
-          <span className="card-icon">📌</span>
-          <span className="card-value">{summary.pending}</span>
-          <span className="card-label">Pending</span>
-        </div>
-        <div className="card">
-          <span className="card-icon">⚠️</span>
-          <span className="card-value">{summary.dueForReapproval}</span>
-          <span className="card-label">Due for Reapproval</span>
-        </div>
-      </div>
+  
 
       <div className="dashboard-filters">
         <input

@@ -2,23 +2,23 @@ import React, { useState, useEffect } from "react";
 import { useAuth, AuthProvider } from "./AuthContext";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-import Home from "./Home";
-import Dashboard from "./Dashboard";
-import AnalysisPage from "./AnalysisPage";
+import Dashboard from "./Dashboard"; // Renamed usage
 import MainApp from "./MainApp";
 import MyApplications from "./MyApplications";
+import AnalysisPage from "./AnalysisPage";
 import "./App.css";
-import './responsive.css';
+import "./responsive.css";
+
 function AppContent() {
   const { user, logout } = useAuth();
-  const [view, setView] = useState("home");
+  const [view, setView] = useState("login"); // ✅ Start from login
   const [currentAppId, setCurrentAppId] = useState(null);
   const [resetKey, setResetKey] = useState(Date.now());
 
-  // Automatically go to Home view after login
+  // Go to Dashboard after login
   useEffect(() => {
-    if (user && view !== "home") {
-      setView("home");
+    if (user && (view === "login" || view === "register")) {
+      setView("dashboard");
     }
   }, [user]);
 
@@ -29,10 +29,10 @@ function AppContent() {
   };
 
   if (!user) {
-    return view === "login" ? (
-      <LoginForm onSwitch={() => setView("register")} />
-    ) : (
+    return view === "register" ? (
       <RegisterForm onSwitch={() => setView("login")} />
+    ) : (
+      <LoginForm onSwitch={() => setView("register")} />
     );
   }
 
@@ -44,7 +44,7 @@ function AppContent() {
           <span>
             Welcome, {user.name} ({user.role})
           </span>
-          <button onClick={() => switchView("home")} disabled={view === "home"}>
+          <button onClick={() => switchView("dashboard")} disabled={view === "dashboard"}>
             🏠 Home
           </button>
           <button onClick={() => switchView("main")} disabled={view === "main"}>
@@ -53,17 +53,13 @@ function AppContent() {
           <button onClick={() => switchView("myapps")} disabled={view === "myapps"}>
             📂 My Applications
           </button>
-          <button onClick={() => switchView("dashboard")} disabled={view === "dashboard"}>
-            📊 Dashboard
-          </button>
           <button onClick={logout}>🚪 Logout</button>
         </div>
       </header>
 
-      {view === "home" && <Home setView={switchView} />}
+      {view === "dashboard" && <Dashboard />}
       {view === "main" && <MainApp key={resetKey} />}
       {view === "myapps" && <MyApplications setView={switchView} />}
-      {view === "dashboard" && <Dashboard />}
       {view === "analysis" && (
         <AnalysisPage applicationId={currentAppId} setView={switchView} />
       )}
