@@ -460,3 +460,39 @@
     min-width: 400px;
   }
 }
+
+.actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Adds a small space between buttons */
+  white-space: nowrap;
+}
+
+.notification-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.3rem; /* Makes the emoji larger */
+  padding: 0;
+  color: #ffc107; /* A nice amber/warning color */
+  transition: transform 0.2s ease-in-out;
+}
+
+.notification-button:hover {
+  transform: scale(1.2) rotate(15deg); /* Adds a little shake on hover */
+}
+
+/* Optional: a little style for your existing edit button */
+.edit-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.edit-button:hover {
+  background-color: #0056b3;
+}

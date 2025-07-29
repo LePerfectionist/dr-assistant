@@ -94,7 +94,7 @@ def extract_dr_systems(
                     downstream_dependencies=parsed_data.get("downstream_dependencies", []),
                     key_contacts=parsed_data.get("key_contacts", []),
                     application_id=application_id,
-                    source_reference=f"File: {runbook.filename}, Page Number: {node.metadata['page_number']}, Section near text: '{node.text[:25]}...'"
+                    source_reference=f"File: {runbook.filename}, Page Number: {node.metadata['page_number']}, Section near text: '{node.text[:50]}...'"
                 )
                 newly_created_systems.append(system_to_create)
 

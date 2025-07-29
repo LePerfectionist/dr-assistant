@@ -290,6 +290,20 @@ function Dashboard() {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
+  const RECERTIFICATION_PERIOD_DAYS = 0.0001; // 6 months
+
+  const needsRecertification = (system) => {
+    if (!system.is_approved || !system.approved_at) {
+      // If it's not approved yet, it doesn't need recertification.
+      return false;
+    }
+
+    const approvalDate = new Date(system.approved_at);
+    const now = new Date();
+    const daysSinceApproval = (now - approvalDate) / (1000 * 60 * 60 * 24);
+
+    return daysSinceApproval > RECERTIFICATION_PERIOD_DAYS;
+  };
 
   if (isLoading) {
     return (
@@ -504,13 +518,22 @@ function Dashboard() {
                     {formatDateTime(system.approved_at)}
                   </td>
                   <td>{system.approved_by || "--"}</td>
-                  <td>
+                  <td className="actions-cell">
                     <button 
                       onClick={() => setSelectedSystem(system)}
                       className="edit-button"
                     >
                       ✏️ Edit
                     </button>
+                    {needsRecertification(system) && (
+                      <button 
+                        className="notification-button"
+                        title={`Recertification due! Approved over ${RECERTIFICATION_PERIOD_DAYS} days ago.`}
+                        onClick={() => alert(`Recertification needed for ${system.name}`)}
+                      >
+                        🔔
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
