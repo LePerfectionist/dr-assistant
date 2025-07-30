@@ -36,12 +36,16 @@ class SystemCreateAdmin(SystemBase):
     source_reference: Optional[str] = "Manually created by admin"
 
 class SystemUpdate(BaseModel):
+    name: Optional[str] = None  # Add this if you want to allow name updates
     dr_data: Optional[str] = None
     system_type: Optional[SystemType] = None
     upstream_dependencies: Optional[List[str]] = None
     downstream_dependencies: Optional[List[str]] = None
     key_contacts: Optional[List[str]] = None
     source_reference: Optional[str] = None
+    force_external: Optional[bool] = False
+   
+
 
 # === RUNBOOK ===
 class RunbookResponse(BaseModel):
@@ -54,10 +58,12 @@ class RunbookResponse(BaseModel):
 # === APPLICATION ===
 class ApplicationResponse(BaseModel):
     id: int
+    name: str  # Make sure this field exists
     user_id: int
+    user_name: Optional[str]=None  # Add this field to show who created it
     started_at: datetime
     last_updated: datetime
-    runbooks: List[RunbookResponse] = []
+    runbooks: List[RunbookResponse]
 
     class Config:
         orm_mode = True

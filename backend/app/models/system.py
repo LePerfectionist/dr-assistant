@@ -77,15 +77,16 @@ class System(SQLModel, table=True):
         upstream_dependencies: Optional[List[str]] = None,
         downstream_dependencies: Optional[List[str]] = None,
         key_contacts: Optional[List[str]] = None,
+        auto_created: bool = True  # Add this parameter
     ):
         return cls(
             name=name,
             system_type=system_type,
-            source=SystemSource.MANUALLY_CREATED,
-            dr_data=dr_data or f"Manually created external system: {name}",
+            source=SystemSource.AUTO_EXTRACTED if auto_created else SystemSource.MANUALLY_CREATED,
+            dr_data=dr_data or f"{'Auto-created' if auto_created else 'Manually created'} external system: {name}",
             upstream_dependencies=upstream_dependencies or [],
             downstream_dependencies=downstream_dependencies or [],
             key_contacts=key_contacts or [],
             application_id=application_id,
-            source_reference="Manually created external system",
+            source_reference="Auto-created from dependency" if auto_created else "Manually created",
         )
