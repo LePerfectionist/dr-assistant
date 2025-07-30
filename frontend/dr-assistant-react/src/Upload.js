@@ -461,8 +461,8 @@ function Upload({
     setError(null);
 
     const formData = new FormData();
-    formData.append("name", appName);
-    formData.append("files", file);
+    formData.append("app_name", appName);
+    formData.append("file", file);
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -470,7 +470,7 @@ function Upload({
     try {
       // First upload the document
       const uploadRes = await fetch(
-        "http://localhost:8000/api/v1/validation/upload_documents/", 
+        "http://localhost:8000/api/v1/documents/upload", 
         {
           method: "POST",
           headers: { 
@@ -487,7 +487,7 @@ function Upload({
       }
 
       const uploadData = await uploadRes.json();
-      const appId = uploadData.application_id;
+      const appId = uploadData.id;
 
       setApplicationId(appId);
       setProgress(50);

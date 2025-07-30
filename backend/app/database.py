@@ -8,5 +8,5 @@ def get_session():
         yield session
 
 def init_db():
-    from .models import User, Application, RunbookDocument, System  # import all models
+    from .models import User, Application, RunbookDocument, System, UpdateRequest  # import all models
     SQLModel.metadata.create_all(engine)

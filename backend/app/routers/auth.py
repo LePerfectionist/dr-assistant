@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models.user import User
+from app.models.user import User, UserRole
+from app.models.update_requests import UpdateRequest
 from app.schema import UserResponse
 
 
@@ -60,6 +61,37 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
 # --- Router ---
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+# Viewer User registration
+@router.post("/register/viewer", response_model=UserResponse)
+def register_viewer(
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    session: Session = Depends(get_session)
+):
+    """
+    Handles public registration for new 'viewer' users.
+    """
+    # Check if user already exists
+    existing_user = session.exec(select(User).where(User.email == email)).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered."
+        )
+    
+    new_viewer = User(
+        name=name,
+        email=email,
+        hashed_password=get_password_hash(password),
+        role=UserRole.VIEWER  # <-- Assign the 'viewer' role
+    )
+    session.add(new_viewer)
+    session.commit()
+    session.refresh(new_viewer)
+    
+    return {"message": "User created successfully. Please login."}
+
 @router.post("/register")
 def register_user(
     name: str = Form(...),
@@ -81,7 +113,7 @@ def register_user(
         name=name,
         email=email,
         password=get_password_hash(password),
-        role="checker"  # Default user role is checker for now
+        role=UserRole.CHECKER  # Default user role is checker for now
     )
     session.add(new_user)
     session.commit()

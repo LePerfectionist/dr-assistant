@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from . import (auth, documents, extraction, validation, chat, admin, analysis)
+from . import (auth, documents, extraction, validation, chat, admin, analysis, viewer)
 
 
 api_router = APIRouter(prefix="/api/v1")
@@ -14,4 +14,6 @@ api_router.include_router(chat.router)
 api_router.include_router(validation.router, prefix="/api/v1", tags=["Validation"])
 api_router.include_router(validation.router, prefix="/validation", tags=["validation"])
 api_router.include_router(analysis.router, tags=["Analysis"])
+api_router.include_router(viewer.router, tags=["Viewer"])
 api_router.include_router(admin.router)
+

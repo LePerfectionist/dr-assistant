@@ -49,6 +49,7 @@ def extract_dr_systems(
     """
     Extracts DR systems from the runbook associated with a given Application ID.
     """
+    print("Endpoint: Extracting systems...")
     # 1. Get the Application and its Runbook
     application = session.get(Application, application_id)
     if not application:

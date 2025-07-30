@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
+from .models.update_requests import RequestStatus
 from enum import Enum
 
 class SystemType(str, Enum):
@@ -97,3 +98,21 @@ class ChatResponse(BaseModel):
     source_reference: Optional[str] = None
     is_approved: Optional[bool] = None
     approved_at: Optional[datetime] = None
+
+# === UPDATE REQUEST ===
+class UpdateRequestCreate(BaseModel):
+    system_id: int
+    reason: str
+
+class UpdateRequestResponse(BaseModel):
+    id: int
+    reason: str
+    status: RequestStatus
+    created_at: datetime
+    
+    # Nest the related objects for a rich response
+    system: SystemResponse
+    requested_by_user: UserResponse
+    
+    class Config:
+        orm_mode = True

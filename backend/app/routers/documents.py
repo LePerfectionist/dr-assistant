@@ -14,20 +14,22 @@ UPLOAD_DIRECTORY = "app/runbooks_uploaded"
 
 @router.post("/upload", response_model=ApplicationResponse)
 def upload_runbook(
+    app_name: str = Form(...),
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
-    # Get the user from the auth token instead of a form field
     current_user: User = Depends(get_current_user) 
 ):
-    """
-    Handles uploading a runbook file.
-    1. Verifies the user exists.
-    2. Creates an Application and a RunbookDocument record.
-    3. Saves the file to a designated folder.
-    """
+    # Log
+    print("Entering upload endpoint")
+
+    app_name = app_name.strip()
+    if not app_name:
+        raise HTTPException(status_code=400, detail="Application name cannot be empty.")
+
+    
 
     # 2. Create Application record
-    new_application = Application(user_id=current_user.id)
+    new_application = Application(user_id=current_user.id, name=app_name)
     session.add(new_application)
     session.commit()
     session.refresh(new_application) # Get the new application ID

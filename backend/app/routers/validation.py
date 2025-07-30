@@ -7,17 +7,19 @@ import os
 from pathlib import Path
 from app.database import get_session
 from app.models.system import System, SystemType, SystemSource
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.application import Application
+from app.models.update_requests import UpdateRequest
 from app.models.runbook import RunbookDocument
-from app.schema import SystemResponse, SystemUpdate, ApplicationResponse, SystemCreateAdmin, RunbookResponse
+from app.schema import SystemResponse, SystemUpdate, ApplicationResponse, SystemCreateAdmin, RequestStatus, UpdateRequestResponse
 from app.routers.auth import get_current_user
 
 router = APIRouter(prefix="/validation", tags=["Validation"])
+UPLOAD_DIR = "app/runbooks_uploaded"
 
 @router.post("/upload_documents/")
 async def upload_documents(
-    name: str = Form(...),
+    app_name: str = Form(...),
     files: List[UploadFile] = File(...),
     db: Session = Depends(get_session),
     user: User = Depends(get_current_user),
@@ -38,7 +40,7 @@ async def upload_documents(
             contents = await file.read()
             
             # Save file
-            file_path = os.path.join(UPLOAD_DIR, file.filename)
+            file_path = os.path.join(UPLOAD_DIR, f"{new_app.name}/{file.filename}")
             with open(file_path, "wb") as buffer:
                 buffer.write(contents)
             
@@ -90,7 +92,6 @@ async def upload_documents(
         } for s in systems_created]
     }
 # Ensure upload directory exists
-UPLOAD_DIR = "uploads"
 Path(UPLOAD_DIR).mkdir(exist_ok=True)
 
 
@@ -140,6 +141,8 @@ def list_user_applications(
             status_code=500,
             detail=f"Failed to fetch applications: {str(e)}"
         )
+    
+
 @router.post("/applications", response_model=ApplicationResponse)
 async def create_application(
     name: str = Form(...),
@@ -391,3 +394,70 @@ def get_system_status(
         "current_time": current_time.isoformat(),
         "time_remaining": str(reapproval_due_at - current_time) if reapproval_due_at else None
     }
+
+
+# Checker Update Request handling endpoints
+
+def get_current_checker(current_user: User = Depends(get_current_user)) -> User:
+    """Dependency to ensure the user is a Checker or an Admin."""
+    if current_user.role not in [UserRole.CHECKER, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=403, 
+            detail="You do not have permission to perform this action."
+        )
+    return current_user
+
+
+@router.get("/update-requests", response_model=List[UpdateRequestResponse])
+def get_open_update_requests(
+    session: Session = Depends(get_session),
+    checker: User = Depends(get_current_checker)
+):
+    """
+    (Checker) Gets a list of all update requests that are currently 'open'.
+    """
+    statement = (
+        select(UpdateRequest)
+        .where(UpdateRequest.status == RequestStatus.OPEN)
+        .options(
+            joinedload(UpdateRequest.system), 
+            joinedload(UpdateRequest.requested_by_user)
+        )
+        .order_by(UpdateRequest.created_at.asc())
+    )
+    requests = session.exec(statement).all()
+    return requests
+
+
+@router.patch("/update-requests/{request_id}/status", response_model=UpdateRequestResponse)
+def update_request_status(
+    request_id: int,
+    new_status: RequestStatus, # The new status is sent in the request body
+    session: Session = Depends(get_session),
+    checker: User = Depends(get_current_checker)
+):
+    """
+    (Checker) Updates the status of an update request (e.g., to 'in_progress' or 'closed').
+    """
+    update_request = session.get(UpdateRequest, request_id)
+    if not update_request:
+        raise HTTPException(status_code=404, detail="Update request not found.")
+
+    update_request.status = new_status
+    
+    session.add(update_request)
+    session.commit()
+    session.refresh(update_request)
+    
+    # To return the full nested response, we need to eager load relationships again
+    # after the refresh. A bit redundant but necessary for a full response.
+    db_request = session.exec(
+        select(UpdateRequest)
+        .where(UpdateRequest.id == request_id)
+        .options(
+            joinedload(UpdateRequest.system), 
+            joinedload(UpdateRequest.requested_by_user)
+        )
+    ).one()
+    
+    return db_request
