@@ -322,7 +322,7 @@ function MyApplications({ setView }) {
                   onClick={() => handleExpand(app.id)}
                 >
                   <strong>{getApplicationName(app)}</strong> - 
-                  Created by {app.user_name || 'Unknown'} - 
+                  {/* Created by {app.user_name || 'Unknown'} -  */}
                   {new Date(app.started_at).toLocaleDateString()} 
                   {expandedAppId === app.id ? ' ▼' : ' ▶'}
                 </div>

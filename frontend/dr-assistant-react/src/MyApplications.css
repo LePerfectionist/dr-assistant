@@ -1,15 +1,24 @@
-.my-applications {
-  padding: 20px;
-  font-family: "Segoe UI", sans-serif;
-  background-color: #f5f7fa;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+:root {
+  /* Color Variables */
+  --primary-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --primary-dark: #1e293b;
+  --primary-light: #f8fafc;
+  --accent-blue: #2563eb;
+  --success: #16a34a;
+  --error: #dc2626;
+  --gray-light: #e5e7eb;
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.my-applications h2 {
-  margin-bottom: 16px;
-  color: #1f2937;
+.my-applications {
+  padding: 20px;
+  font-family: "Segoe UI", "Inter", sans-serif;
+  background-color: var(--primary-light);
+  min-height: 100vh; /* Better than fixed height */
+  display: flex;
+  flex-direction: column;
+  color: var(--primary-dark); /* Ensures contrast */
 }
 
 .applications-layout {
@@ -17,310 +26,193 @@
   gap: 16px;
   overflow-x: auto;
   height: calc(100vh - 80px);
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--gray-light) transparent; /* Firefox */
 }
 
+/* Custom scrollbar for Webkit */
+.applications-layout::-webkit-scrollbar {
+  height: 8px;
+}
+.applications-layout::-webkit-scrollbar-thumb {
+  background: var(--gray-light);
+  border-radius: 4px;
+}
 
-/* Stylish Color Theme */
-
-/* Panels - Gradient Backgrounds */
+/* Panel Base Styles */
 .left-panel,
 .middle-panel,
 .right-panel {
-  background: linear-gradient(145deg, #f8f9fa, #ffffff);
+  background: white;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   overflow-y: auto;
   height: 100%;
   border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.left-panel {
-  min-width: 280px;
-  max-width: 320px;
   flex-shrink: 0;
-  background: linear-gradient(145deg, #f0f4f8, #ffffff);
 }
 
-.middle-panel {
-  flex-grow: 1;
-  min-width: 360px;
-  max-width: 520px;
-  background: linear-gradient(145deg, #f5f7fa, #ffffff);
+/* Panel Widths (Responsive) */
+.left-panel { min-width: 280px; max-width: 320px; }
+.middle-panel { min-width: 360px; max-width: 520px; flex-grow: 1; }
+.right-panel { min-width: 420px; flex-grow: 1; }
+
+@media (max-width: 1024px) {
+  .applications-layout { flex-direction: column; height: auto; }
+  .left-panel, .middle-panel, .right-panel { 
+    min-width: 100% !important; 
+    max-width: 100% !important;
+  }
 }
 
-.right-panel {
-  flex-grow: 1;
-  min-width: 420px;
-  background: linear-gradient(145deg, #f8fafc, #ffffff);
-}
-
-/* Header block - Vibrant Accent */
+/* Header with Gradient */
 .app-header {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6); /* Purple gradient */
+  background: var(--primary-gradient);
   padding: 12px 16px;
   border-radius: 12px;
   margin-bottom: 16px;
   font-weight: 600;
   color: white;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
-
 .app-header:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
-/* System Card - Modern Design */
+/* System Card (Modern & Accessible) */
 .system-card {
   background: white;
-  border: none;
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   position: relative;
-  overflow: hidden;
-}
-
-.system-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: #e2e8f0;
-  transition: all 0.3s ease;
+  border-left: 4px solid transparent; /* Replaces ::before for better semantics */
 }
 
 .system-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(168, 165, 165, 0.1);
-}
-
-.system-card:hover::before {
-  background: #6366f1;
-  width: 6px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  border-left-color: var(--accent-blue);
 }
 
 .system-card.selected {
   background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
-  border-left: 4px solid #2563eb;
+  border-left-color: var(--accent-blue);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
 }
 
-.system-card.selected::before {
-  background: #2563eb;
-  width: 4px;
+/* Status Badges */
+.approved { color: var(--success); }
+.pending { color: var(--error); }
+
+.system-detail-panel {
+  label {
+    display: block;
+    margin: 14px 0 4px;
+    font-weight: 600;
+    color: var(--primary-dark);
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--gray-light);
+    border-radius: 6px;
+    background-color: #f9fafb;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: monospace;
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  }
+
+  button {
+    margin-right: 10px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-primary {
+    background-color: var(--accent-blue);
+    color: white;
+    &:hover { background-color: #1d4ed8; }
+  }
+
+  .btn-success {
+    background-color: #30b32c;
+    color: white;
+  }
 }
 
-/* System Name - Stylish Typography */
-.system-card .system-name {
-  font-weight: 700;
-  font-size: 1.1em;
-  margin-bottom: 6px;
-  color: #1e293b;
-  font-family: 'Inter', sans-serif;
-}
-/* Left Panel - Black Text for Application Info */
-.left-panel {
-  min-width: 280px;
-  max-width: 320px;
-  flex-shrink: 0;
-  background: linear-gradient(145deg, #f0f4f8, #ffffff);
-}
-
-/* Application Header - Dark Text */
-.app-header {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  padding: 12px 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  font-weight: 600;
-  color: white; /* Keep header text white */
-  cursor: pointer;
-}
-
-/* Application Info Inside Left Panel - Black Text */
-.application-block {
-  color: #575151; /* Force black text */
-}
-
-.application-block strong {
-  color: #6d6666; /* Application name in black */
-}
-
-.application-block .app-date {
-  color: #4a5568; /* Slightly lighter for date */
-  font-size: 0.85em;
-}
-
-/* Ensure all text in left panel is visible */
-.left-panel,
-.left-panel * {
-  color: #000000 !important; /* Force black text for all content */
-}
-
-/* Specific override for the user name */
-.left-panel .user-name {
-  color: #2d3748 !important; /* Dark gray for user name */
-}
-
-/* Make sure the application list items are visible */
-.app-header .app-info {
-  color: #000000;
-}
-
-.app-header .app-info strong {
-  color: #1a202c; /* Even darker for emphasis */
-}
-
-.app-header .app-info span {
-  color: #4a5568; /* Lighter for secondary info */
-}
-
-/* Approval Status */
-.approved {
-  color: #16a34a;
-  font-size: 0.85em;
-  font-weight: 500;
-}
-.pending {
-  color: #dc2626;
-  font-size: 0.85em;
-  font-weight: 500;
-}
-
-/* System Detail */
-.system-detail-panel label {
-  display: block;
-  margin-top: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.system-detail-panel input,
-.system-detail-panel textarea {
-  width: 100%;
-  padding: 10px;
-  margin-top: 6px;
-  margin-bottom: 16px;
-  font-family: monospace;
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background-color: #f9fafb;
-}
-
-.system-detail-panel button {
-  margin-right: 10px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  background-color: #2563eb;
-  color: white;
-  transition: background-color 0.2s;
-}
-
-.system-detail-panel button:hover {
-  background-color: #1d4ed8;
-}
-
-.system-detail-panel button:last-of-type {
-  background-color: #30b32c;
-}
-.system-card.selected {
-  border-left: 4px solid #2563eb;
-  background: linear-gradient(to right, #e0f2fe, #f8fafc);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-}
-
-.system-card .system-name {
-  font-weight: 700;
-  font-size: 1.05em;
-  margin-bottom: 4px;
-  color: #1e3a8a;
-}
-
-.system-card .system-meta {
-  font-size: 0.85em;
-  color: #6b7280;
-}
-
-.approved::before {
-  content: "✔️ ";
-  color: #16a34a;
-}
-.pending::before {
-  content: "⚠️ ";
-  color: #dc2626;
-}
-
-.system-detail-panel label {
-  font-size: 0.95em;
-  margin-bottom: 4px;
-}
-
-.system-detail-panel input,
-.system-detail-panel textarea {
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.system-detail-panel input:focus,
-.system-detail-panel textarea:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
-}
-
-.dependency-tags-display {
+.placeholder-panel {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: -10px;
-  margin-bottom: 15px;
-}
-.tag-display {
-  background-color: #e9ecef;
-  color: #495057;
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 0.9rem;
-}
-
-.tag-display.external {
-  background-color: #f8d7da; /* A light red/warning color */
-  color: #721c24;
-  border: 1px dashed #f5c6cb;
-}
-
-/* Add External System Button */
-.create-external-button {
-  background-color: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
+  height: 100%;
+  background: #fbfbfb;
+  border-left: 1px solid #ddd;
+
+  .placeholder-box {
+    text-align: center;
+    padding: 32px;
+    border: 2px dashed #bbb;
+    border-radius: 12px;
+    max-width: 480px;
+    background: white;
+  }
+
+  .placeholder-icon { 
+    font-size: 48px;
+    color: #7f9cf5;
+  }
+
+  .placeholder-text {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.6;
+  }
+}
+.right-panel {
+  /* Dimensions & Layout */
+  min-width: 420px;  /* Default minimum width */
+  flex: 1;          /* Takes remaining space (replaces flex-grow: 1) */
+  
+  /* Visual Styling (Single Gradient Definition) */
+  background: linear-gradient(145deg, #f8fafc, #ffffff);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  
+  /* Scrolling */
+  overflow-y: auto;
+  height: 100%;
 }
 
-.create-external-button:hover {
-  background-color: #dcfce7;
-  border-color: #86efac;
+/* Responsive Behavior */
+@media (max-width: 1024px) {
+  .right-panel {
+    min-width: 100%; /* Full width on smaller screens */
+    max-width: 100%;
+    margin-top: 16px; /* Adds spacing when stacked vertically */
+  }
 }
 
-/* Modal Overlay */
+/* Modal Overlay - Backdrop */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -332,69 +224,112 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease-out;
 }
 
-/* Modal Content */
+/* Modal Content Container */
 .modal-content {
-  background-color: white;
-  border-radius: 8px;
-  width: 500px;
-  max-width: 90%;
+  background-color: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.modal-overlay:hover .modal-content {
+  transform: translateY(-2px);
 }
 
 /* Modal Header */
 .modal-header {
-  padding: 16px;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: #f9fafb;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .modal-header h3 {
   margin: 0;
-  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
 }
 
+/* Close Button */
 .modal-close {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 1.5rem;
   cursor: pointer;
   color: #6b7280;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-close:hover {
-  color: #1f2937;
+  color: #111827;
+  background-color: #f3f4f6;
+}
+
+.modal-close:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
 /* Modal Body */
 .modal-body {
-  padding: 16px;
+  padding: 1.5rem;
 }
 
+/* Form Elements */
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 1.25rem;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   font-weight: 500;
   color: #374151;
+  font-size: 0.875rem;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
   width: 100%;
-  padding: 8px 12px;
+  padding: 0.625rem 0.75rem;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: inherit;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-group textarea {
@@ -402,23 +337,38 @@
   resize: vertical;
 }
 
+.form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
 /* Form Actions */
 .form-actions {
-  padding: 16px;
-  border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancel,
+.btn-submit {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-cancel {
   background-color: #f3f4f6;
   color: #374151;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
+  border: 1px solid #d1d5db;
 }
 
 .btn-cancel:hover {
@@ -426,188 +376,43 @@
 }
 
 .btn-submit {
-  background-color: #2563eb;
+  background-color: #3b82f6;
   color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
+  border: 1px solid transparent;
 }
 
 .btn-submit:hover {
-  background-color: #1d4ed8;
+  background-color: #2563eb;
 }
 
-/* Panel Header */
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+.btn-submit:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
 }
 
-.panel-header h3 {
-  margin: 0;
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.system-actions {
-  display: flex;
-  gap: 10px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Responsive Adjustments */
+@media (max-width: 640px) {
   .modal-content {
-    width: 95%;
+    margin: 0 1rem;
+    max-height: 80vh;
   }
   
   .form-actions {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
   
   .btn-cancel,
   .btn-submit {
     width: 100%;
   }
-  
-  .system-actions {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .create-external-button,
-  .view-graph-button {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* Base improvements */
-.my-applications {
-  /* Consider using min-height instead of height */
-  min-height: 100vh;
-  height: auto;
-}
-
-/* Better panel responsiveness */
-.applications-layout {
-  flex-direction: column;
-  overflow-x: hidden;
-  height: auto;
-  padding-bottom: 20px;
-}
-
-@media (min-width: 1024px) {
-  .applications-layout {
-    flex-direction: row;
-    height: calc(100vh - 80px);
-  }
-}
-
-/* Panel width adjustments */
-.left-panel,
-.middle-panel,
-.right-panel {
-  min-width: 100%;
-  max-width: 100%;
-}
-
-@media (min-width: 768px) {
-  .left-panel {
-    min-width: 260px;
-    max-width: 300px;
-  }
-  .middle-panel {
-    min-width: 350px;
-    max-width: 500px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .right-panel {
-    min-width: 400px;
-  }
-}
-
-/* Better mobile modal handling */
-@media (max-width: 480px) {
-  .modal-content {
-    width: 100%;
-    max-width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-  
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    padding: 12px; /* Larger touch targets */
-  }
-}
-
-/* Better mobile buttons */
-@media (max-width: 480px) {
-  .system-detail-panel button {
-    padding: 12px;
-    margin-bottom: 8px;
-    width: 100%;
-  }
-  
-  .form-actions {
-    flex-direction: column-reverse; /* Submit button on bottom */
-  }
-  
-  .btn-cancel,
-  .btn-submit {
-    width: 100%;
-  }
-}
-
-/* Prevent textarea zoom on iOS */
-@media (max-width: 480px) {
-  .system-detail-panel textarea {
-    font-size: 16px; /* Prevents iOS zoom */
-  }
-}
-
-.placeholder-panel {
-  flex: 1;
-  background: #fbfbfb;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* align to top */
-  padding: 40px 20px;       /* top spacing */
-  overflow-y: auto;         /* in case of small screens */
-  border-left: 1px solid #ddd;
-  height: 100%;             /* ensure full height for flex layout */
-  box-sizing: border-box;
-}
-
-.placeholder-box {
-  text-align: center;
-  max-width: 480px;
-  width: 100%;
-  padding: 32px;
-  margin-top: 40px;          /* visually separate from very top */
-  border: 2px dashed #bbb;
-  border-radius: 12px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.placeholder-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: #7f9cf5;
-}
-
-.placeholder-text {
-  font-size: 1.1rem;
-  color: #555;
-  line-height: 1.6;
-  font-weight: 500;
 }

@@ -3,13 +3,21 @@
 }
 
 .app-header {
-  background-color: #282c34;
-  padding: 10px;
-  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-direction: row;
+  background: linear-gradient(135deg, #36363b, #36363b);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(2, 2, 2, 0.3);
 }
+
 
 .header-actions button {
   margin-left: 10px;

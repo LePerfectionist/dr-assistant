@@ -457,6 +457,32 @@
     width: 100%;
   }
 }
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.create-external-btn {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-external-btn:hover {
+  background-color: #4338ca;
+}
 
 @media (min-width: 640px) {
   .create-external-form {

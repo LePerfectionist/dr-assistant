@@ -315,16 +315,18 @@ function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1>📊 Home</h1>
-
-      <div className="dashboard-actions">
-        <button 
-          className="create-external-btn"
-          onClick={() => setShowCreateExternalModal(true)}
-        >
-          ➕ Create External System
-        </button>
-      </div>
+  {/* Header Row */}
+  <div className="dashboard-header">
+    <h1>📊 Home</h1>
+    {isAdmin && (
+      <button 
+        className="create-external-btn"
+        onClick={() => setShowCreateExternalModal(true)}
+      >
+        ➕ Create External System
+      </button>
+    )}
+  </div>
 
     <div className="summary-cards">
         <div className="card">
