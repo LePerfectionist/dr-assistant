@@ -18,9 +18,5 @@ def get_session():
 
 # Initialize DB
 def init_db():
-<<<<<<< Updated upstream
     from .models import User, Application, RunbookDocument, System, UpdateRequest  # import all models
-=======
-    from .models import User, Application, RunbookDocument, System
->>>>>>> Stashed changes
     SQLModel.metadata.create_all(engine)
