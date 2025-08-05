@@ -92,12 +92,14 @@ class UserUpdate(BaseModel):
 # === CHAT ===
 class ChatRequest(BaseModel):
     query: str
+    conversation_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
     answer: str
     source_reference: Optional[str] = None
     is_approved: Optional[bool] = None
     approved_at: Optional[datetime] = None
+    conversation_id: str
 
 # === UPDATE REQUEST ===
 class UpdateRequestCreate(BaseModel):

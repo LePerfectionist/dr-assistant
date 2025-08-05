@@ -7,7 +7,8 @@ class Application(SQLModel, table=True):
     name: str = Field(default="", index=True)  # New field for application name
     started_at: datetime = Field(default_factory=datetime.utcnow)
     last_updated: datetime = Field(default_factory=datetime.utcnow)
-
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
     user_id: int = Field(foreign_key="user.id")
     user: "User" = Relationship(back_populates="applications")
 

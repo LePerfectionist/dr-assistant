@@ -3,9 +3,18 @@ from .routers import api_router
 from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from dotenv import load_dotenv
 from .database import init_db
-
 load_dotenv()
+import logging
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('app.log')
+    ]
+)
 app = FastAPI(title="GenAI DR Utility")
 
 @app.on_event("startup")

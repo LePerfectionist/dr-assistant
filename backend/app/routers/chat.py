@@ -1,161 +1,152 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
-from typing import List
-import os
-
-# --- LlamaIndex Imports ---
-from llama_index.core.query_engine import RouterQueryEngine
-from llama_index.core.query_engine import NLSQLTableQueryEngine
-from llama_index.core import KnowledgeGraphIndex, StorageContext
-from llama_index.core.graph_stores import SimpleGraphStore
-from llama_index.core.tools import QueryEngineTool
-from llama_index.core.selectors import PydanticSingleSelector
-
-from llama_index.core import SQLDatabase, VectorStoreIndex, StorageContext, load_index_from_storage
-from llama_index.llms.openai import OpenAI
-from llama_index.core.settings import Settings
-
-
-from app.database import get_session, engine
-from app.models.application import Application
-from app.models.user import User
+from sqlmodel import Session, select
+from typing import Optional, Dict, List
+from app.database import get_session
+from app.models import Application, User, RunbookDocument, System
 from app.schema import ChatRequest, ChatResponse
 from app.routers.auth import get_current_user
-
-
-Settings.llm = OpenAI(model="gpt-3.5-turbo")
+from llama_index.core import VectorStoreIndex, Settings
+from llama_index.core.schema import Document
+from llama_index.core.memory import ChatMemoryBuffer
+from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.query_engine import RetrieverQueryEngine, TransformQueryEngine
+from llama_index.core.postprocessor import SimilarityPostprocessor
+from llama_index.core.node_parser import MarkdownNodeParser, HierarchicalNodeParser
+import os
+import logging
+import re
+from uuid import uuid4
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+logger = logging.getLogger(__name__)
 
+# Configure LlamaIndex settings
+Settings.chunk_size = 512
+Settings.chunk_overlap = 50
 
-query_engine_cache = {}
+# Memory store for conversations
+conversation_memory: Dict[str, ChatMemoryBuffer] = {}
 
-def get_chat_query_engine(application_id: int):
-    """
-    Builds or retrieves from cache the agentic query engine for a specific application.
-    """
-    if application_id in query_engine_cache:
-        print(f"Loading query engine for app {application_id} from cache.")
-        return query_engine_cache[application_id]
+def load_document_text(runbook: RunbookDocument) -> Optional[str]:
+    """Universal document loader with encoding fallback"""
+    try:
+        with open(runbook.storage_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except UnicodeDecodeError:
+        try:
+            with open(runbook.storage_path, 'r', encoding='latin-1') as f:
+                return f.read()
+        except Exception as e:
+            logger.error(f"Failed to load {runbook.filename}: {str(e)}")
+            return None
 
-    print(f"Building new query engine for app {application_id}...")
+def create_application_index(
+    application: Application, 
+    include_documents: bool = True,
+    include_systems: bool = True
+) -> Optional[VectorStoreIndex]:
+    """Enhanced index creator with document type awareness"""
+    documents = []
     
-    # Database Tool
-    sql_database = SQLDatabase(engine, include_tables=["system"])
-    sql_query_engine = NLSQLTableQueryEngine(
-        sql_database=sql_database,
-        tables=["system"],
+    # Process documents
+    if include_documents and application.runbooks:
+        for runbook in application.runbooks:
+            content = load_document_text(runbook)
+            if not content:
+                continue
+                
+            # Auto-detect document type
+            is_markdown = bool(re.search(r'^#\s+.+$', content, re.MULTILINE))
+            is_technical = any(kw in content.lower() for kw in ["procedure", "config", "failover"])
+            
+            # Choose parser based on content
+            parser = (MarkdownNodeParser() if is_markdown else 
+                     HierarchicalNodeParser() if is_technical else 
+                     None)
+            
+            doc = Document(
+                text=content,
+                metadata={
+                    "doc_type": "markdown" if is_markdown else "technical" if is_technical else "general",
+                    "filename": runbook.filename,
+                    "application_id": application.id
+                }
+            )
+            documents.append(doc)
 
-        context_str=f"The user is asking about systems related to application_id {application_id}. All SQL queries MUST include a WHERE clause to filter by application_id = {application_id}."
-    )
-    sql_tool = QueryEngineTool.from_defaults(
-        query_engine=sql_query_engine,
-        name="database_tool",
-        description=(
-            "Use this tool to answer questions about specific approved systems, "
-            "their DR steps, dependencies, or approval status."
-        ),
-    )
+    # Add systems information
+    if include_systems and application.systems:
+        systems_text = "\n\n".join([
+            f"System: {system.name}\nType: {system.system_type}\n"
+            f"DR Steps: {system.dr_data}\nDependencies: {system.upstream_dependencies}"
+            for system in application.systems
+        ])
+        documents.append(Document(
+            text=systems_text,
+            metadata={"doc_type": "systems"}
+        ))
 
-    # TODO : RAG Tool 
-    index_storage_path = f"./storage/app_{application_id}"
-    if not os.path.exists(index_storage_path):
-        # Handle case where index doesn't exist for this app
-        return None 
-        
-    storage_context = StorageContext.from_defaults(persist_dir=index_storage_path)
-    index = load_index_from_storage(storage_context)
-    rag_query_engine = index.as_query_engine()
-    rag_tool = QueryEngineTool.from_defaults(
-        query_engine=rag_query_engine,
-        name="runbook_tool",
-        description=(
-            "Use this tool to answer general questions about the runbook's content, "
-            "like policies, overall procedures, or other contextual information."
-        ),
-    )
+    return VectorStoreIndex.from_documents(documents) if documents else None
 
-    # Router Agent
-    query_engine = RouterQueryEngine.from_defaults(
-        query_engine_tools=[sql_tool, rag_tool],
-        selector=PydanticSingleSelector.from_defaults(),
-    )
-    
-    query_engine_cache[application_id] = query_engine
-    return query_engine
+def get_conversation_memory(conversation_id: str) -> ChatMemoryBuffer:
+    """Get or create conversation memory"""
+    if conversation_id not in conversation_memory:
+        conversation_memory[conversation_id] = ChatMemoryBuffer.from_defaults(
+            token_limit=3000
+        )
+    return conversation_memory[conversation_id]
 
-@router.post("/{application_id}/query", response_model=ChatResponse)
-def chat_with_application(
-    application_id: int,
+@router.post("/query", response_model=ChatResponse)
+async def chat_with_application(
     request: ChatRequest,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Handles a chat query using an agentic router to choose the best data source.
-    """
-    application = session.get(Application, application_id)
-    if not application or application.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Application not found or access denied.")
+    try:
+        # Get or create conversation ID
+        conversation_id = request.conversation_id or str(uuid4())
+        memory = get_conversation_memory(conversation_id)
 
-    query_engine = get_chat_query_engine(application_id)
-    if not query_engine:
-        raise HTTPException(status_code=404, detail="Knowledge base for this application not yet created. Please run the extraction first.")
-
-    print(f"Routing query: '{request.query}'")
-    response = query_engine.query(request.query)
-    
-    # response.response
-    return ChatResponse(answer=str(response))
-
-
-
-@router.post("/{application_id}/graph-query", response_model=ChatResponse)
-def chat_with_graph(
-    application_id: int,
-    request: ChatRequest,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Answers questions about system dependencies by querying a knowledge graph.
-    """
-    application = session.get(Application, application_id)
-    if not application or application.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Application not found or access denied.")
-
-    # 1. Dynamically build knowledge graph triplets from the database
-    kg_triplets = []
-    for system in application.systems:
-        for dep in system.upstream_dependencies:
-            kg_triplets.append((system.name, "depends on", dep))
-        for dep in system.downstream_dependencies:
-            # Note: A better relation might be "is a dependency for"
-            kg_triplets.append((dep, "supports", system.name))
+        # Get application
+        application = session.exec(
+            select(Application)
+            .where(Application.user_id == current_user.id)
+            .order_by(Application.created_at.desc())
+            .limit(1)
+        ).first()
         
-        status = "is approved" if system.is_approved else "is not approved"
-        kg_triplets.append((system.name, "approval status is", status))
+        if not application:
+            return ChatResponse(
+                answer="❌ Please upload a document first.",
+                conversation_id=conversation_id
+            )
 
-    if not kg_triplets:
-        return ChatResponse(answer="No dependency information available to build a knowledge graph.")
+        # Create index
+        index = create_application_index(application)
+        if not index:
+            return ChatResponse(
+                answer="❌ No searchable content found.",
+                conversation_id=conversation_id
+            )
 
-    # 2. Create an in-memory knowledge graph for the query
-    graph_store = SimpleGraphStore()
-    for subj, rel, obj in kg_triplets:
-        graph_store.upsert_triplet(subj, rel, obj)
-
-    storage_context = StorageContext.from_defaults(graph_store=graph_store)
-
-    index = KnowledgeGraphIndex(
-        nodes=[], 
-        storage_context=storage_context
-    )
-
-    # 3. Query the graph
-    query_engine = index.as_query_engine(
-        include_text=False, # We only want to query the graph structure
-        response_mode="tree_summarize" # Can improve summary of multiple facts
-    )
-    response = query_engine.query(request.query)
-
-    return ChatResponse(answer=str(response))
+        # Create query engine with memory
+        query_engine = index.as_query_engine(
+            memory=memory,
+            response_mode="tree_summarize",
+            similarity_top_k=3,
+            verbose=True
+        )
+        
+        response = query_engine.query(request.query)
+        return ChatResponse(
+            answer=str(response),
+            conversation_id=conversation_id,
+            sources=[node.metadata.get("filename", "Unknown") for node in response.source_nodes]  # Optional: include sources
+        )
+        
+    except Exception as e:
+        logger.exception("Chat endpoint failed")
+        return ChatResponse(
+            answer=f"⚠️ Error: {str(e)}",
+            conversation_id=conversation_id if 'conversation_id' in locals() else None
+        )
