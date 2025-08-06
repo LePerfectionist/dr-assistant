@@ -17,5 +17,5 @@ def get_session():
 
 # Initialize DB
 def init_db():
-    from .models import User, Application, RunbookDocument, System
+    from .models import User, Application, RunbookDocument, System, UpdateRequest  # import all models
     SQLModel.metadata.create_all(engine)
