@@ -1,9 +1,11 @@
 
 from pydantic import BaseModel, EmailStr
+from sqlmodel import SQLModel
 from typing import List, Optional
 from datetime import datetime
 from .models.update_requests import RequestStatus
 from enum import Enum
+from .models.update_requests import RequestStatus
 
 class SystemType(str, Enum):
     INTERNAL = "internal"
@@ -36,6 +38,10 @@ class SystemResponse(SystemBase):
 class SystemCreateAdmin(SystemBase):
     source_reference: Optional[str] = "Manually created by admin"
 
+class SystemCreate(SQLModel):
+    name: str
+    system_type: str
+    
 class SystemUpdate(BaseModel):
     name: Optional[str] = None  # Add this if you want to allow name updates
     dr_data: Optional[str] = None
@@ -103,8 +109,27 @@ class ChatResponse(BaseModel):
 
 # === UPDATE REQUEST ===
 class UpdateRequestCreate(BaseModel):
+    
     system_id: int
     reason: str
+
+class UpdateRequestResponse(SQLModel):
+    id: int
+    system_id: int
+    requested_by: int
+    status: str
+    reason: str  # Make sure this is included
+    request_type: str
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    resolved_by: Optional[int] = None
+    comment: Optional[str] = None
+
+
+class UpdateRequestCreate(BaseModel):
+    system_id: int
+    reason: str
+    request_type: Optional[str] = "approval"
 
 class UpdateRequestResponse(BaseModel):
     id: int
@@ -115,6 +140,23 @@ class UpdateRequestResponse(BaseModel):
     # Nest the related objects for a rich response
     system: SystemResponse
     requested_by_user: UserResponse
+    
+    class Config:
+        orm_mode = True
+
+class UpdateRequestResponse(BaseModel):
+    id: int
+    reason: str
+    status: RequestStatus
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    comment: Optional[str] = None
+    resolved_by: Optional[int] = None
+    
+    # Nest the related objects
+    system: SystemResponse
+    requested_by_user: UserResponse
+    resolved_by_user: Optional[UserResponse] = None
     
     class Config:
         orm_mode = True

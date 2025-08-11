@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import Modal from "./Modal";
 import SystemDetail from "./SystemDetail";
+import RequestManagement from './RequestManagement';
+
 import {
   PieChart,
   Pie,
@@ -35,6 +37,8 @@ function Dashboard() {
   const [filterCriticality, setFilterCriticality] = useState("");
   const [filterSystemType, setFilterSystemType] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsError, setRequestsError] = useState(null);
   const [selectedSystem, setSelectedSystem] = useState(null);
   const [showCreateExternalModal, setShowCreateExternalModal] = useState(false);
   const [newExternalSystem, setNewExternalSystem] = useState({
@@ -46,9 +50,12 @@ function Dashboard() {
     downstream_dependencies: [],
     key_contacts: []
   });
+  const [approvalRequests, setApprovalRequests] = useState([]);
+  const [showRequests, setShowRequests] = useState(false);
   
   const systemsPerPage = 8;
   const isAdmin = user?.role === "admin";
+  const isChecker = user?.role === "checker";
 
   const fetchSystemStatus = async (systemId) => {
     try {
@@ -62,6 +69,52 @@ function Dashboard() {
     } catch (error) {
       console.error("Error fetching system status:", error);
       return "Approved";
+    }
+  };
+
+  const fetchApprovalRequests = async () => {
+  setRequestsLoading(true);
+  setRequestsError(null);
+  try {
+    const res = await fetch(
+      "http://localhost:8000/api/v1/requests/pending",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    if (!res.ok) {
+      throw new Error('Failed to fetch approval requests');
+    }
+    
+    const data = await res.json();
+    setApprovalRequests(Array.isArray(data) ? data : []);
+  } catch (err) {
+    setRequestsError(err.message);
+    setApprovalRequests([]);
+  } finally {
+    setRequestsLoading(false);
+  }
+};
+
+  const approveRequest = async (requestId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/v1/requests/${requestId}/approve`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      if (res.ok) {
+        alert("Request approved successfully!");
+        fetchApprovalRequests();
+        fetchSummary();
+      } else {
+        throw new Error("Approval failed");
+      }
+    } catch (err) {
+      console.error("Approval error:", err);
+      alert("Failed to approve request");
     }
   };
 
@@ -120,6 +173,17 @@ function Dashboard() {
         pending: pendingCount,
         dueForReapproval: dueForReapprovalCount
       });
+      // Add this to your Dashboard component
+{(user.role === 'admin' || user.role === 'checker') && (
+  <div className="request-management-section">
+    <h2>Approval Requests</h2>
+    <RequestManagement />
+  </div>
+)}
+      // Fetch approval requests for checkers/admins
+      if (isAdmin || isChecker) {
+        await fetchApprovalRequests();
+      }
     } catch (err) {
       console.error("Dashboard error", err);
     } finally {
@@ -128,10 +192,11 @@ function Dashboard() {
   };
 
   const createExternalSystem = async () => {
-      const confirm = window.confirm(
-    `Are you sure you want to create an external system named "${newExternalSystem.name}"?`
-  );
-  if (!confirm) return;
+    const confirm = window.confirm(
+      `Are you sure you want to create an external system named "${newExternalSystem.name}"?`
+    );
+    if (!confirm) return;
+    
     try {
       if (!newExternalSystem.name.trim()) {
         alert("System name cannot be empty");
@@ -294,7 +359,6 @@ function Dashboard() {
 
   const needsRecertification = (system) => {
     if (!system.is_approved || !system.approved_at) {
-      // If it's not approved yet, it doesn't need recertification.
       return false;
     }
 
@@ -314,21 +378,59 @@ function Dashboard() {
   }
 
   return (
+    
     <div className="dashboard-container">
-  {/* Header Row */}
-  <div className="dashboard-header">
-    <h1>📊 Home</h1>
-    {isAdmin && (
-      <button 
-        className="create-external-btn"
-        onClick={() => setShowCreateExternalModal(true)}
-      >
-        ➕ Create External System
-      </button>
-    )}
-  </div>
+      {/* Header Row */}
+      <div className="dashboard-header">
+        <h1>📊 Home</h1>
+        {isAdmin && (
+          <button 
+            className="create-external-btn"
+            onClick={() => setShowCreateExternalModal(true)}
+          >
+            ➕ Create External System
+          </button>
+        )}
+      </div>
 
-    <div className="summary-cards">
+      {/* Approval Requests Section for Checkers/Admins */}
+      {(isAdmin || isChecker) && (
+        <div className="approval-requests-section">
+          <button 
+            className="toggle-requests-btn"
+            onClick={() => setShowRequests(!showRequests)}
+          >
+            {showRequests ? "Hide" : "Show"} Pending Approval Requests ({approvalRequests.length})
+          </button>
+
+          {showRequests && (
+            <div className="requests-list">
+              {approvalRequests.length === 0 ? (
+                <p>No pending approval requests</p>
+              ) : (
+                approvalRequests.map(request => (
+                  <div key={request.id} className="request-card">
+                    <h4>System: {request.system.name}</h4>
+                    <p>Requested by: {request.requested_by_user.name}</p>
+                    <p>Requested at: {new Date(request.created_at).toLocaleString()}</p>
+                    
+                    <div className="request-actions">
+                      <button 
+                        className="approve-btn"
+                        onClick={() => approveRequest(request.id)}
+                      >
+                        Approve
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="summary-cards">
         <div className="card">
           <span className="card-icon">🗂</span>
           <span className="card-value">{summary.apps}</span>
@@ -426,8 +528,6 @@ function Dashboard() {
           </div>
         </div>
       </div>
-
-  
 
       <div className="dashboard-filters">
         <input
@@ -669,6 +769,7 @@ function Dashboard() {
         </Modal>
       )}
     </div>
+    
   );
 }
 

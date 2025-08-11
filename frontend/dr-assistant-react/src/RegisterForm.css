@@ -99,3 +99,13 @@
 .view-graph-button:hover {
   background-color: #218838;
 }
+
+/* NEW: Role selection styles */
+.role-select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}

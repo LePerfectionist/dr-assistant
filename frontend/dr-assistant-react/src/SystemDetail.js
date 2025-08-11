@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import DependencyInput from './DependencyInput';
 import "./SystemDetail.css";
+import RequestApproval from './RequestApproval';
 
 
 function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
@@ -179,6 +180,19 @@ function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
           )}
         </div>
       </div>
+
+      {user?.role === "viewer" && !system.is_approved && (
+  <div className="viewer-actions">
+    <RequestApproval 
+      system={system} 
+      user={user}
+      onRequestSubmit={() => {
+        // Optional: refresh data or show confirmation
+        alert('Your request has been submitted for approval');
+      }}
+    />
+  </div>
+)}
 
       {editMode ? (
         <div className="edit-form">

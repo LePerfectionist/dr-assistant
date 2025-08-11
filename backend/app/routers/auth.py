@@ -92,33 +92,44 @@ def register_viewer(
     
     return {"message": "User created successfully. Please login."}
 
+# ... existing code ...
+
 @router.post("/register")
 def register_user(
     name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
+    role: str = Form(...),
     session: Session = Depends(get_session)
 ):
-    """Handles user registration."""
+    """Handles user registration with role selection."""
+    # Validate role
+    if role not in ["viewer", "checker"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid role selected. Must be either 'viewer' or 'checker'"
+        )
+
     # Check if user already exists
     existing_user = session.exec(select(User).where(User.email == email)).first()
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail="Email already registered."
         )
     
-    # Create new user with a hashed password
+    # Create new user with selected role
     new_user = User(
         name=name,
         email=email,
         password=get_password_hash(password),
-        role=UserRole.CHECKER  # Default user role is checker for now
+        role=role
     )
+    
     session.add(new_user)
     session.commit()
     
-    return {"message": "User created successfully. Please login."}
+    return {"message": f"{role.capitalize()} user created successfully. Please login."}
 
 @router.post("/login")
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
@@ -144,3 +155,4 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), ses
 def read_users_me(current_user: User = Depends(get_current_user)):
     """A test endpoint to get the current logged-in user's details."""
     return current_user
+
