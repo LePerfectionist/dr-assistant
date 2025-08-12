@@ -1,0 +1,68 @@
+/* Application-specific chat styles */
+.application-chat .chatbox {
+  width: 350px;
+  max-height: 500px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.application-chat .chat-header {
+  background: #4a6fa5;
+  color: white;
+  padding: 12px 15px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.application-chat .chat-header-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.application-chat .chat-reset-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 5px;
+}
+
+.application-chat .chat-reset-btn:hover {
+  opacity: 0.8;
+}
+
+.application-chat .chat-body {
+  height: 350px;
+  background: #f9f9f9;
+}
+
+.application-chat .message-content {
+  padding: 8px 12px;
+  border-radius: 18px;
+  max-width: 80%;
+}
+
+.application-chat .chat-message.user {
+  justify-content: flex-end;
+}
+
+.application-chat .chat-message.user .message-content {
+  background: #4a6fa5;
+  color: white;
+}
+
+.application-chat .chat-message.assistant .message-content {
+  background: #e9ecef;
+  color: #333;
+}
+
+.application-chat .message-sources {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 4px;
+  padding: 0 12px;
+}

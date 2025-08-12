@@ -5,7 +5,7 @@ export default function RegisterForm({ onSwitch }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("viewer"); // NEW: Role state
+  const [role, setRole] = useState("viewer"); 
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
 
@@ -19,7 +19,7 @@ export default function RegisterForm({ onSwitch }) {
       formData.append("name", name);
       formData.append("email", email);
       formData.append("password", password);
-      formData.append("role", role); // NEW: Add role to form data
+      formData.append("role", role); 
 
       const res = await fetch("http://127.0.0.1:8000/api/v1/auth/register", {
         method: "POST",

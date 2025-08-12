@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from './apiClient'; // Import our authenticated API client
-import './AnalysisPage.css'; // We'll create this for styling
+import './AnalysisPage.css'; 
 import GraphChat from './GraphChat';
 
 function AnalysisPage({ applicationId, setView }) {

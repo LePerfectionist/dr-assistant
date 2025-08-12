@@ -76,9 +76,6 @@ class ApplicationResponse(BaseModel):
         orm_mode = True
 
 # === USER ===
-class UserCreate(BaseModel):
-    name: str
-    email: EmailStr
 
 class UserResponse(BaseModel):
     id: int
@@ -108,41 +105,11 @@ class ChatResponse(BaseModel):
     conversation_id: str
 
 # === UPDATE REQUEST ===
-class UpdateRequestCreate(BaseModel):
-    
-    system_id: int
-    reason: str
-
-class UpdateRequestResponse(SQLModel):
-    id: int
-    system_id: int
-    requested_by: int
-    status: str
-    reason: str  # Make sure this is included
-    request_type: str
-    created_at: datetime
-    resolved_at: Optional[datetime] = None
-    resolved_by: Optional[int] = None
-    comment: Optional[str] = None
-
 
 class UpdateRequestCreate(BaseModel):
     system_id: int
     reason: str
     request_type: Optional[str] = "approval"
-
-class UpdateRequestResponse(BaseModel):
-    id: int
-    reason: str
-    status: RequestStatus
-    created_at: datetime
-    
-    # Nest the related objects for a rich response
-    system: SystemResponse
-    requested_by_user: UserResponse
-    
-    class Config:
-        orm_mode = True
 
 class UpdateRequestResponse(BaseModel):
     id: int

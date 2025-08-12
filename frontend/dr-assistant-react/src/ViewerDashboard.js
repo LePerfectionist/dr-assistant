@@ -1,228 +1,11 @@
-// // import React, { useEffect, useState } from 'react';
-// // import { useAuth } from './AuthContext';
-// // import RequestApproval from './RequestApproval';
-// // import SystemDetails from './SystemDetails';
-// // import './ViewerDashboard.css';
-
-// // function ViewerDashboard() {
-// //   const { user } = useAuth();
-// //   const [systems, setSystems] = useState([]);
-// //   const [loading, setLoading] = useState(true);
-// //   const [selectedSystem, setSelectedSystem] = useState(null);
-// //   const [showDetails, setShowDetails] = useState(false);
-// //   const [page, setPage] = useState(1);
-// //   const [totalPages, setTotalPages] = useState(1);
-// //   const [sortBy, setSortBy] = useState('name');
-// //   const [searchTerm, setSearchTerm] = useState('');
-// //   const [error, setError] = useState(null);
-
-// //   const fetchSystems = async () => {
-// //     try {
-// //       setLoading(true);
-// //       setError(null);
-      
-// //       const response = await fetch(
-// //         `http://localhost:8000/api/v1/requests/viewer/systems?page=${page}&sort=${sortBy}&search=${searchTerm}`,
-// //         {
-// //           headers: {
-// //             'Authorization': `Bearer ${user.token}`,
-// //           },
-// //         }
-// //       );
-
-// //       if (!response.ok) {
-// //         throw new Error(`HTTP error! status: ${response.status}`);
-// //       }
-
-// //       const data = await response.json();
-      
-// //       // Maintain backward compatibility with both response formats
-// //       const items = Array.isArray(data) ? data : data.items || [];
-// //       const pages = data.total_pages || 1;
-      
-// //       setSystems(items);
-// //       setTotalPages(pages);
-// //     } catch (error) {
-// //       console.error('Error fetching systems:', error);
-// //       setError(error.message);
-// //       setSystems([]);
-// //     } finally {
-// //       setLoading(false);
-// //     }
-// //   };
-
-// //   useEffect(() => {
-// //     if (user?.token) {
-// //       fetchSystems();
-// //     }
-// //   }, [user?.token, page, sortBy, searchTerm]);
-
-// //   const handleSystemClick = (system) => {
-// //     setSelectedSystem(system);
-// //     setShowDetails(true);
-// //   };
-
-// //   const handleBackToList = () => {
-// //     setShowDetails(false);
-// //     setSelectedSystem(null);
-// //   };
-
-// //   const handleRequestClick = (system) => {
-// //     if (window.confirm(`Are you sure you want to request ${system.is_approved ? 'changes' : 'approval'} for ${system.name}?`)) {
-// //       setSelectedSystem(system);
-// //     }
-// //   };
-
-// //   if (loading) return (
-// //     <div className="loading-skeleton">
-// //       {[...Array(5)].map((_, i) => (
-// //         <div key={i} className="system-card-skeleton"></div>
-// //       ))}
-// //     </div>
-// //   );
-
-// //   return (
-// //     <div className="viewer-dashboard">
-// //       <h2>Viewer Dashboard</h2>
-      
-// //       {error && <div className="error-message">Error: {error}</div>}
-      
-// //       {!showDetails ? (
-// //         <>
-// //           <div className="dashboard-controls">
-// //             <div className="search-sort-container">
-// //               <input
-// //                 type="text"
-// //                 placeholder="Search systems..."
-// //                 value={searchTerm}
-// //                 onChange={(e) => {
-// //                   setSearchTerm(e.target.value);
-// //                   setPage(1);
-// //                 }}
-// //                 className="search-input"
-// //               />
-// //               <select 
-// //                 value={sortBy} 
-// //                 onChange={(e) => setSortBy(e.target.value)}
-// //                 className="sort-select"
-// //               >
-// //                 <option value="name">Name (A-Z)</option>
-// //                 <option value="-name">Name (Z-A)</option>
-// //                 <option value="system_type">Type (A-Z)</option>
-// //                 <option value="-system_type">Type (Z-A)</option>
-// //                 <option value="is_approved">Status (Approved first)</option>
-// //                 <option value="-is_approved">Status (Pending first)</option>
-// //               </select>
-// //             </div>
-// //           </div>
-
-// //           <div className="systems-list">
-// //             {systems.length > 0 ? (
-// //               systems.map((system) => (
-// //                 <div 
-// //                   key={system.id} 
-// //                   className={`system-card ${system.is_approved ? 'approved' : 'pending'}`}
-// //                   onClick={() => handleSystemClick(system)}
-// //                 >
-// //                   <div className="system-info">
-// //                     <h3>{system.name}</h3>
-// //                     <p>Type: {system.system_type}</p>
-// //                     <p className="status">
-// //                       Status: <span className={`status-badge ${system.is_approved ? 'approved' : 'pending'}`}>
-// //                         {system.is_approved ? 'Approved' : 'Pending'}
-// //                       </span>
-// //                     </p>
-// //                   </div>
-// //                   <button 
-// //                     onClick={(e) => {
-// //                       e.stopPropagation();
-// //                       handleRequestClick(system);
-// //                     }}
-// //                     className={`request-btn ${system.is_approved ? 'changes' : 'approval'}`}
-// //                   >
-// //                     {system.is_approved ? 'Request Changes' : 'Request Approval'}
-// //                   </button>
-// //                 </div>
-// //               ))
-// //             ) : (
-// //               <div className="no-systems">
-// //                 <p>No systems found</p>
-// //                 <button onClick={() => {
-// //                   setSearchTerm('');
-// //                   setPage(1);
-// //                   fetchSystems();
-// //                 }}>
-// //                   Reset filters
-// //                 </button>
-// //               </div>
-// //             )}
-// //           </div>
-
-// //           {systems.length > 0 && totalPages > 1 && (
-// //             <div className="pagination-controls">
-// //               <button 
-// //                 disabled={page === 1} 
-// //                 onClick={() => setPage(p => p - 1)}
-// //                 className="pagination-btn"
-// //               >
-// //                 &larr; Previous
-// //               </button>
-// //               <span className="page-info">Page {page} of {totalPages}</span>
-// //               <button 
-// //                 disabled={page === totalPages} 
-// //                 onClick={() => setPage(p => p + 1)}
-// //                 className="pagination-btn"
-// //               >
-// //                 Next &rarr;
-// //               </button>
-// //             </div>
-// //           )}
-// //         </>
-// //       ) : (
-// //         <SystemDetails 
-// //           system={selectedSystem} 
-// //           onBack={handleBackToList}
-// //           onRequest={() => {
-// //             if (window.confirm(`Are you sure you want to request ${selectedSystem.is_approved ? 'changes' : 'approval'} for ${selectedSystem.name}?`)) {
-// //               setShowDetails(false);
-// //               setSelectedSystem(selectedSystem);
-// //             }
-// //           }}
-// //         />
-// //       )}
-
-// //       {selectedSystem && !showDetails && (
-// //         <div className="request-modal">
-// //           <div className="modal-content">
-// //             <button 
-// //               className="close-btn" 
-// //               onClick={() => setSelectedSystem(null)}
-// //               aria-label="Close modal"
-// //             >
-// //               &times;
-// //             </button>
-// //             <RequestApproval 
-// //               system={selectedSystem} 
-// //               user={user}
-// //               isApproved={selectedSystem.is_approved}
-// //               onRequestSubmit={() => {
-// //                 setSelectedSystem(null);
-// //                 fetchSystems();
-// //               }}
-// //             />
-// //           </div>
-// //         </div>
-// //       )}
-// //     </div>
-// //   );
-// // }
-
-// // export default ViewerDashboard;
+// ViewerDashboard without chatbot
 
 // import React, { useEffect, useState } from "react";
 // import { useAuth } from "./AuthContext";
 // import Modal from "./Modal";
 // import SystemDetail from "./SystemDetail";
+// import RequestApproval from "./RequestApproval";
+// import ApplicationChatbot from './ApplicationChatbot';
 // import {
 //   PieChart,
 //   Pie,
@@ -254,6 +37,7 @@
 //   const [filterSystemType, setFilterSystemType] = useState("");
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const [selectedSystem, setSelectedSystem] = useState(null);
+//   const [showRequestModal, setShowRequestModal] = useState(false);
 //   const [error, setError] = useState(null);
 
 //   const systemsPerPage = 8;
@@ -278,7 +62,6 @@
 
 //       const data = await response.json();
       
-//       // Maintain backward compatibility with both response formats
 //       const items = Array.isArray(data) ? data : data.items || [];
 //       const totalSystems = data.total_count || items.length;
       
@@ -299,7 +82,7 @@
 //       setIsLoading(false);
 //     }
 //   };
-
+  
 //   useEffect(() => {
 //     if (user?.token) {
 //       fetchSystems();
@@ -341,6 +124,11 @@
 //         {type.charAt(0).toUpperCase() + type.slice(1)}
 //       </span>
 //     );
+//   };
+
+//   const handleRequestClick = (system) => {
+//     setSelectedSystem(system);
+//     setShowRequestModal(true);
 //   };
 
 //   const filteredSystems = systems
@@ -570,6 +358,12 @@
 //                     >
 //                       👁️ View
 //                     </button>
+//                     <button
+//                       onClick={() => handleRequestClick(system)}
+//                       className={`request-button ${system.is_approved ? 'changes' : 'approval'}`}
+//                     >
+//                       {system.is_approved ? '✏️ Request Changes' : '✅ Request Approval'}
+//                     </button>
 //                   </td>
 //                 </tr>
 //               ))
@@ -622,16 +416,41 @@
 //           />
 //         </Modal>
 //       )}
+
+//       {showRequestModal && selectedSystem && (
+//         <Modal
+//           title={`Request ${selectedSystem.is_approved ? 'Changes' : 'Approval'} for ${selectedSystem.name}`}
+//           onClose={() => {
+//             setShowRequestModal(false);
+//             setSelectedSystem(null);
+//           }}
+//         >
+//           <RequestApproval 
+//             system={selectedSystem} 
+//             user={user}
+//             isApproved={selectedSystem.is_approved}
+//             onRequestSubmit={() => {
+//               setShowRequestModal(false);
+//               setSelectedSystem(null);
+//               fetchSystems(); // Refresh the list after submission
+//             }}
+//           />
+//         </Modal>
+//       )}
 //     </div>
 //   );
 // }
 
 // export default ViewerDashboard;
+
+//Partial chatbot implementation and adding application Id column
+
 import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import Modal from "./Modal";
 import SystemDetail from "./SystemDetail";
 import RequestApproval from "./RequestApproval";
+import ApplicationChatbot from './ApplicationChatbot';
 import {
   PieChart,
   Pie,
@@ -665,6 +484,8 @@ function ViewerDashboard() {
   const [selectedSystem, setSelectedSystem] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [error, setError] = useState(null);
+  const [showChat, setShowChat] = useState(false); // Added for chatbot
+  const [selectedApplicationId, setSelectedApplicationId] = useState(null); // Added for application-specific chat
 
   const systemsPerPage = 8;
 
@@ -757,6 +578,16 @@ function ViewerDashboard() {
     setShowRequestModal(true);
   };
 
+  const handleApplicationIdClick = (appId) => {
+    if (selectedApplicationId === appId) {
+      setSelectedApplicationId(null);
+      setShowChat(false);
+    } else {
+      setSelectedApplicationId(appId);
+      setShowChat(true);
+    }
+  };
+
   const filteredSystems = systems
     .filter((s) => s.name?.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter((s) =>
@@ -821,6 +652,12 @@ function ViewerDashboard() {
       {/* Header Row */}
       <div className="dashboard-header">
         <h1>📊 Viewer Dashboard</h1>
+        <button 
+          className="chat-toggle-button"
+          onClick={() => setShowChat(!showChat)}
+        >
+          {showChat ? 'Close Chat' : 'Open Chat Assistant'}
+        </button>
       </div>
 
       {error && <div className="error-message">Error: {error}</div>}
@@ -950,6 +787,7 @@ function ViewerDashboard() {
               <th>Type</th>
               <th>Status</th>
               <th>Criticality</th>
+              <th>Application ID</th>
               <th>Last Approved</th>
               <th>Approved By</th>
               <th>Actions</th>
@@ -958,8 +796,10 @@ function ViewerDashboard() {
           <tbody>
             {paginatedSystems.length === 0 ? (
               <tr>
-                <td colSpan="7" className="no-systems-message">
-                  No systems found matching your filters
+                <td colSpan="8" className="no-systems-message">
+                  {systems.length === 0 
+                    ? 'No systems available' 
+                    : 'No systems match current filters'}
                 </td>
               </tr>
             ) : (
@@ -974,8 +814,18 @@ function ViewerDashboard() {
                   </td>
                   <td>{getCriticalityTag(system)}</td>
                   <td>
-                    {formatDateTime(system.approved_at)}
+                    {system.application_id ? (
+                      <button 
+                        className={`app-id-button ${selectedApplicationId === system.application_id ? 'active' : ''}`}
+                        onClick={() => handleApplicationIdClick(system.application_id)}
+                      >
+                        {system.application_id}
+                      </button>
+                    ) : (
+                      '--'
+                    )}
                   </td>
+                  <td>{formatDateTime(system.approved_at)}</td>
                   <td>{system.approved_by || "--"}</td>
                   <td className="actions-cell">
                     <button 
@@ -1058,10 +908,18 @@ function ViewerDashboard() {
             onRequestSubmit={() => {
               setShowRequestModal(false);
               setSelectedSystem(null);
-              fetchSystems(); // Refresh the list after submission
+              fetchSystems();
             }}
           />
         </Modal>
+      )}
+
+      {showChat && (
+        <ApplicationChatbot 
+          token={user.token}
+          onClose={() => setShowChat(false)}
+          applicationId={selectedApplicationId}
+        />
       )}
     </div>
   );
