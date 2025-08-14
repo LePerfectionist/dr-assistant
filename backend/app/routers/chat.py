@@ -1,9 +1,10 @@
+from app.helpers import extract_text_from_folder, get_openai_chat_completion_repsonse
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import Optional, Dict, List
 from app.database import get_session
 from app.models import Application, User, RunbookDocument, System
-from app.schema import ChatRequest, ChatResponse
+from app.schema import ChatRequest, ChatResponse, DRStepsRequest, DRStepsResponse
 from app.routers.auth import get_current_user
 from llama_index.core import VectorStoreIndex, Settings
 from llama_index.core.schema import Document
@@ -105,6 +106,31 @@ async def chat_with_application(
     try:
         # Get or create conversation ID
         conversation_id = request.conversation_id or str(uuid4())
+
+        if current_user.name.lower() == "demo":
+            print("Demo chat use case for Demo")
+            # 1. Parse system/state from the query string
+            #    Example: "Core Banking in Primary, Cards in Secondary"
+            import re
+            matches = re.findall(r"([\w\s]+?)\s+in\s+(Primary|Secondary)\b", request.query, re.IGNORECASE)
+            if matches:
+                system_choices = {sys.strip(): state.title() for sys, state in matches}
+
+                # 2. Create DRStepsRequest
+                dr_req = DRStepsRequest(
+                    session_id=conversation_id,
+                    system_choices=system_choices
+                )
+
+                # 3. Call your DR generation logic directly
+                dr_result = await generate_dr_plan(dr_req)
+
+                return ChatResponse(
+                    answer=dr_result.dr_steps,
+                    conversation_id=conversation_id
+                )
+
+
         memory = get_conversation_memory(conversation_id)
 
         # Get application
@@ -150,3 +176,31 @@ async def chat_with_application(
             answer=f"⚠️ Error: {str(e)}",
             conversation_id=conversation_id if 'conversation_id' in locals() else None
         )
+    
+@router.post("/generate-dr-steps", response_model=DRStepsResponse)
+async def generate_dr_plan(request: DRStepsRequest):
+    print("Entering dr step generation")
+    try:
+        session_folder = f"uploads"   #Ideally to be replaced by session upload dir
+        context_text = extract_text_from_folder(session_folder)
+        context_text = f"Runbook Context:\n\n{context_text}"
+
+        systems_to_failover = [sys for sys, state in request.system_choices.items() if state == "Secondary"]
+
+        if not systems_to_failover:
+            return DRStepsResponse(dr_steps="No systems were selected for failover.", session_id=request.session_id)
+        
+        failover_systems = " and ".join(systems_to_failover)
+
+        with open("app\prompts\dr_steps_generation.txt", "r") as f:
+            prompt_template = f.read()
+        prompt = prompt_template.format(failover_systems=failover_systems)
+
+
+        dr_steps_text = get_openai_chat_completion_repsonse(prompt, context_text)
+
+
+        return DRStepsResponse(dr_steps=dr_steps_text, session_id=request.session_id)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))

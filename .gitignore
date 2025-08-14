@@ -11,3 +11,4 @@ backend/dr_app.db
 
 backend/app/runbooks_uploaded/
 backend/lib
+backend/app.log

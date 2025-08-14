@@ -170,3 +170,54 @@
   padding: 5px 10px;
   font-size: 0.8em;
 }
+
+/* Add this to your existing ChatBubble.css file */
+
+/* --- Resizing styles --- */
+.chatbox {
+  /* ... your existing chatbox styles ... */
+  resize: both; /* Allows resizing horizontally and vertically */
+  overflow: auto; /* Important for the resize handle to appear */
+  min-width: 350px; /* Prevents the box from becoming too small */
+  min-height: 400px;
+  max-width: 90vw; /* Prevents the box from becoming too large */
+  max-height: 90vh;
+}
+
+/* --- Markdown and Code Block styles --- */
+.message-content {
+  /* ... your existing styles ... */
+  line-height: 1.6;
+}
+
+/* Style for inline code */
+.message-content code {
+  background-color: rgba(0, 0, 0, 0.08);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Style for code blocks from react-syntax-highlighter */
+.message-content pre {
+  margin: 1rem 0;
+  border-radius: 8px;
+  font-size: 0.9em;
+}
+
+/* Headings */
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  font-weight: 600;
+}
+
+/* Lists */
+.message-content ul,
+.message-content ol {
+  padding-left: 20px;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}

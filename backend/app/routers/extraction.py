@@ -104,7 +104,7 @@ def extract_dr_systems(
             system_names = [system.name for system in newly_created_systems]
             for system in newly_created_systems:
                 system.upstream_dependencies = [dep for dep in system.upstream_dependencies if dep in system_names]
-                system.downstream_dependencies = [dep for dep in system.upstream_dependencies if dep in system_names]
+                system.downstream_dependencies = [dep for dep in system.downstream_dependencies if dep in system_names]
                 session.add(system)
 
 

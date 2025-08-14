@@ -1,7 +1,7 @@
 
 from pydantic import BaseModel, EmailStr
 from sqlmodel import SQLModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 from .models.update_requests import RequestStatus
 from enum import Enum
@@ -127,3 +127,13 @@ class UpdateRequestResponse(BaseModel):
     
     class Config:
         orm_mode = True
+
+
+# === LEGACY DR STEPS GENERATION ===
+class DRStepsRequest(BaseModel):
+    session_id: str
+    system_choices: Dict[str, str]
+
+class DRStepsResponse(BaseModel):
+    dr_steps: str
+    session_id: str

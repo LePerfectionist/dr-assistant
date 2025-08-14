@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from app.database import get_session
 from app.models import UpdateRequest, System, User
-from app.schema import UpdateRequestResponse, SystemResponse
+from app.schema import SystemSource, SystemType, UpdateRequestResponse, SystemResponse
 from app.routers.auth import get_current_user
 from app.schema import UpdateRequestCreate
 
@@ -112,6 +112,53 @@ def get_viewer_systems(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        # Special case for demo user
+        if current_user.name.lower() == "demo":
+            demo_systems = [
+                SystemResponse(
+                    id=999,
+                    name="Demo Core Service",
+                    system_type=SystemType.INTERNAL,
+                    source=SystemSource.AUTO_EXTRACTED,
+                    dr_data="Core DR info",
+                    upstream_dependencies=["Upstream Service 1", "Upstream Service 2"],
+                    downstream_dependencies=["Downstream Service 1"],
+                    key_contacts=["core_contact@example.com"],
+                    is_approved=True,
+                    approved_by="System Admin",
+                    approved_at=datetime.now(),
+                    source_reference="POC"
+                ),
+                SystemResponse(
+                    id=1000,
+                    name="Demo Backup System",
+                    system_type=SystemType.INTERNAL,
+                    source=SystemSource.AUTO_EXTRACTED,
+                    dr_data="Backup DR info",
+                    upstream_dependencies=[],
+                    downstream_dependencies=[],
+                    key_contacts=["backup_contact@example.com"],
+                    is_approved=True,
+                    approved_by="System Admin",
+                    approved_at=datetime.now(),
+                    source_reference="POC"
+                ),
+                SystemResponse(
+                    id=1001,
+                    name="Demo Analytics Module",
+                    system_type=SystemType.INTERNAL,
+                    source=SystemSource.AUTO_EXTRACTED,
+                    dr_data="Analytics DR info",
+                    upstream_dependencies=["Core Service"],
+                    downstream_dependencies=["Reporting Engine"],
+                    key_contacts=["analytics_contact@example.com"],
+                    is_approved=True,
+                    approved_by="System Admin",
+                    approved_at=datetime.now(),
+                    source_reference="POC"
+                ),
+            ]
+            return demo_systems
         stmt = select(System)
         systems = session.exec(stmt).all()
         return systems
