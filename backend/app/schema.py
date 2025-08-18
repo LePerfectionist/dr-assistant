@@ -27,6 +27,7 @@ class SystemBase(BaseModel):
 
 class SystemResponse(SystemBase):
     id: int
+    application_id: int
     is_approved: bool
     approved_by: Optional[str] = None
     approved_at: Optional[datetime] = None

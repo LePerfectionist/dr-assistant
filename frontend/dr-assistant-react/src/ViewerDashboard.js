@@ -33,6 +33,7 @@ function ViewerDashboard() {
   const [filterApprover, setFilterApprover] = useState("");
   const [monthRange, setMonthRange] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterCriticality, setFilterCriticality] = useState("");
   const [filterSystemType, setFilterSystemType] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSystem, setSelectedSystem] = useState(null);
@@ -271,18 +272,84 @@ function ViewerDashboard() {
       </div>
 
       <div className="dashboard-filters">
-        <input
-          type="text"
-          placeholder="🔍 Search system"
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="filter-input"
-        />
-        {/* ... other filters ... */}
-      </div>
+  <input
+    type="text"
+    placeholder="🔍 Search system"
+    value={searchTerm}
+    onChange={(e) => {
+      setSearchTerm(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="filter-input"
+  />
+  
+  <input
+    type="text"
+    placeholder="👤 Filter by approver"
+    value={filterApprover}
+    onChange={(e) => {
+      setFilterApprover(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="filter-input"
+  />
+  
+  <select 
+    value={monthRange} 
+    onChange={(e) => {
+      setMonthRange(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="filter-select"
+  >
+    <option value="">All Time</option>
+    <option value="3">Last 3 Months</option>
+    <option value="6">Last 6 Months</option>
+    <option value="12">Last 12 Months</option>
+  </select>
+  
+  <select 
+    value={filterStatus} 
+    onChange={(e) => {
+      setFilterStatus(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="filter-select"
+  >
+    <option value="">All Statuses</option>
+    <option value="Approved">Approved</option>
+    <option value="Pending">Pending</option>
+  </select>
+  
+  <select
+    value={filterCriticality}
+    onChange={(e) => {
+      setFilterCriticality(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="filter-select"
+  >
+    <option value="">All Criticalities</option>
+    <option value="Low">Low (1)</option>
+    <option value="Medium">Medium (2)</option>
+    <option value="High">High (3)</option>
+    <option value="Critical">Critical (4)</option>
+  </select>
+  
+  <select
+    value={filterSystemType}
+    onChange={(e) => {
+      setFilterSystemType(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="filter-select"
+  >
+    <option value="">All Types</option>
+    <option value="internal">Internal</option>
+    <option value="external">External</option>
+    <option value="unclassified">Unclassified</option>
+  </select>
+</div>
 
       <div className="systems-table-container">
         <table className="systems-table">
@@ -351,6 +418,43 @@ function ViewerDashboard() {
             )}
           </tbody>
         </table>
+        {filteredSystems.length > systemsPerPage && (
+  <div className="pagination-container">
+    <div className="pagination">
+      <button
+        onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+        className="pagination-button"
+      >
+        &laquo; Previous
+      </button>
+      
+      {Array.from(
+        { length: Math.ceil(filteredSystems.length / systemsPerPage) },
+        (_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`pagination-button ${currentPage === i + 1 ? 'active' : ''}`}
+          >
+            {i + 1}
+          </button>
+        )
+      ).slice(
+        Math.max(0, currentPage - 3),
+        Math.min(Math.ceil(filteredSystems.length / systemsPerPage), currentPage + 2)
+      )}
+      
+      <button
+        onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(filteredSystems.length / systemsPerPage)))}
+        disabled={currentPage === Math.ceil(filteredSystems.length / systemsPerPage)}
+        className="pagination-button"
+      >
+        Next &raquo;
+      </button>
+    </div>
+  </div>
+)}
       </div>
 
       {filteredSystems.length > systemsPerPage && (

@@ -32,17 +32,22 @@ function MyApplications({ setView }) {
   });
 
   const getApplicationName = (app) => {
-    if (app.name && app.name.trim() !== "") {
-      return app.name;
-    }
-    
-    if (app.runbooks?.length > 0 && app.runbooks[0].filename) {
-      const filename = app.runbooks[0].filename;
-      return filename.replace(/\.[^/.]+$/, "");
-    }
-    
-    return "Unnamed Application";
-  };
+  let displayName = "";
+  
+  // Include application ID
+  displayName += `ID: ${app.id}  `;
+  
+  if (app.name && app.name.trim() !== "") {
+    displayName += app.name;
+  } else if (app.runbooks?.length > 0 && app.runbooks[0].filename) {
+    const filename = app.runbooks[0].filename;
+    displayName += filename.replace(/\.[^/.]+$/, "");
+  } else {
+    displayName += "Unnamed Application";
+  }
+  
+  return displayName;
+};
 
   const handleSystemClick = (system) => {
     setSelectedSystemId(system.id);

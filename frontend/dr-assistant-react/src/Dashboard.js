@@ -119,30 +119,35 @@ function Dashboard() {
   };
 
   const fetchSummary = async () => {
-    try {
-      setIsLoading(true);
-      
-      const appsRes = await fetch(
-        isAdmin
-          ? "http://localhost:8000/api/v1/admin/applications"
-          : "http://localhost:8000/api/v1/validation/applications",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const appsData = await appsRes.json();
-      setApps(appsData);
+  try {
+    setIsLoading(true);
+    
+    const appsRes = await fetch(
+      isAdmin
+        ? "http://localhost:8000/api/v1/admin/applications"
+        : "http://localhost:8000/api/v1/validation/applications",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const appsData = await appsRes.json();
 
-      const systemsList = await Promise.all(
-        appsData.map((app) =>
-          fetch(
-            `http://localhost:8000/api/v1/${
-              isAdmin ? "admin" : "validation"
-            }/applications/${app.id}/systems`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          ).then((r) => r.json())
-        )
-      );
+    const systemsList = await Promise.all(
+      appsData.map(async (app) => {
+        const res = await fetch(
+          `http://localhost:8000/api/v1/${
+            isAdmin ? "admin" : "validation"
+          }/applications/${app.id}/systems`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const systems = await res.json();
+        return systems.map(s => ({ 
+          ...s, 
+          // Ensure application_id is included
+          application_id: s.application_id || app.id
+        }));
+      })
+    );
 
-      const allSystems = systemsList.flat();
+    const allSystems = systemsList.flat();
       const systemsWithStatus = await Promise.all(
         allSystems.map(async (system) => {
           const status = await fetchSystemStatus(system.id);
@@ -591,7 +596,9 @@ function Dashboard() {
         <table className="systems-table">
           <thead>
             <tr>
+              
               <th>System</th>
+              <th>Application ID</th>
               <th>Type</th>
               <th>Status</th>
               <th>Criticality</th>
@@ -601,48 +608,49 @@ function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {paginatedSystems.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="no-systems-message">
-                  No systems found matching your filters
-                </td>
-              </tr>
-            ) : (
-              paginatedSystems.map((system) => (
-                <tr key={system.id}>
-                  <td>{system.name}</td>
-                  <td>{getSystemTypeTag(system)}</td>
-                  <td>
-                    <span className={`status-badge ${getStatus(system).toLowerCase().replace(/\s+/g, '-')}`}>
-                      {getStatus(system)}
-                    </span>
-                  </td>
-                  <td>{getCriticalityTag(system)}</td>
-                  <td>
-                    {formatDateTime(system.approved_at)}
-                  </td>
-                  <td>{system.approved_by || "--"}</td>
-                  <td className="actions-cell">
-                    <button 
-                      onClick={() => setSelectedSystem(system)}
-                      className="edit-button"
-                    >
-                      ✏️ Edit
-                    </button>
-                    {needsRecertification(system) && (
-                      <button 
-                        className="notification-button"
-                        title={`Recertification due! Approved over ${RECERTIFICATION_PERIOD_DAYS} days ago.`}
-                        onClick={() => alert(`Recertification needed for ${system.name}`)}
-                      >
-                        🔔
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
+  {paginatedSystems.length === 0 ? (
+    <tr>
+      <td colSpan="8" className="no-systems-message"> {/* Update colSpan to 8 */}
+        No systems found matching your filters
+      </td>
+    </tr>
+  ) : (
+    paginatedSystems.map((system) => (
+      <tr key={system.id}>
+        <td>{system.name}</td>
+        <td>{system.application_id || "--"}</td> {/* New cell */}
+        <td>{getSystemTypeTag(system)}</td>
+        <td>
+          <span className={`status-badge ${getStatus(system).toLowerCase().replace(/\s+/g, '-')}`}>
+            {getStatus(system)}
+          </span>
+        </td>
+        <td>{getCriticalityTag(system)}</td>
+        <td>
+          {formatDateTime(system.approved_at)}
+        </td>
+        <td>{system.approved_by || "--"}</td>
+        <td className="actions-cell">
+          <button 
+            onClick={() => setSelectedSystem(system)}
+            className="edit-button"
+          >
+            ✏️ Edit
+          </button>
+          {needsRecertification(system) && (
+            <button 
+              className="notification-button"
+              title={`Recertification due! Approved over ${RECERTIFICATION_PERIOD_DAYS} days ago.`}
+              onClick={() => alert(`Recertification needed for ${system.name}`)}
+            >
+              🔔
+            </button>
+          )}
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
         </table>
       </div>
 

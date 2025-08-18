@@ -165,6 +165,12 @@ function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
       <div className="system-header">
         <h2 className="system-name">{system.name}</h2>
         <div className="system-meta">
+          <div className="meta-item">
+    <span className="meta-label">Application ID:</span>
+    <span className="meta-value">
+      {system.application_id}
+    </span>
+  </div>
           {showSourceBadge && (
             <span className={`source-badge ${system.source}`}>
               {system.source === "manually_created" ? "Manual" : "Auto"}
