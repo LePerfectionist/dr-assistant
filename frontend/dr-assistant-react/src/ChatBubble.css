@@ -29,14 +29,20 @@
 /* Full chat window */
 .chatbox {
   background: white;
-  width: 380px;
-  height: 440px;
+  width: 600px;
+  height: 650px;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   overflow: hidden; /* hide scrollbars */
   margin-bottom: 10px;
+  resize: both; /* Allows resizing horizontally and vertically */
+  overflow: auto; /* Important for the resize handle to appear */
+  min-width: 350px; /* Prevents the box from becoming too small */
+  min-height: 400px;
+  max-width: 90vw; /* Prevents the box from becoming too large */
+  max-height: 90vh;
 }
 
 /* Header bar at the top of the chat */
@@ -71,16 +77,18 @@
   display: flex;
   flex-direction: column;
   gap: 10px; /* spacing between messages */
+  text-align: left;
 }
 
 /* Each chat message */
 .chat-message {
-  padding: 10px 14px;
+  padding: 7px 10px;
   border-radius: 14px;
   max-width: 80%;
   word-wrap: break-word;
   line-height: 1.5;
   white-space: pre-wrap;
+  text-align: left;
 }
 
 /* User's message style */
@@ -169,19 +177,6 @@
   color: #ff6b6b;
   padding: 5px 10px;
   font-size: 0.8em;
-}
-
-/* Add this to your existing ChatBubble.css file */
-
-/* --- Resizing styles --- */
-.chatbox {
-  /* ... your existing chatbox styles ... */
-  resize: both; /* Allows resizing horizontally and vertically */
-  overflow: auto; /* Important for the resize handle to appear */
-  min-width: 350px; /* Prevents the box from becoming too small */
-  min-height: 400px;
-  max-width: 90vw; /* Prevents the box from becoming too large */
-  max-height: 90vh;
 }
 
 /* --- Markdown and Code Block styles --- */

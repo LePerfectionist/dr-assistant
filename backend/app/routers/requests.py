@@ -117,6 +117,7 @@ def get_viewer_systems(
             demo_systems = [
                 SystemResponse(
                     id=999,
+                    application_id=999,
                     name="Demo Core Service",
                     system_type=SystemType.INTERNAL,
                     source=SystemSource.AUTO_EXTRACTED,
@@ -131,6 +132,7 @@ def get_viewer_systems(
                 ),
                 SystemResponse(
                     id=1000,
+                    application_id=1000,
                     name="Demo Backup System",
                     system_type=SystemType.INTERNAL,
                     source=SystemSource.AUTO_EXTRACTED,
@@ -145,6 +147,7 @@ def get_viewer_systems(
                 ),
                 SystemResponse(
                     id=1001,
+                    application_id=1001,
                     name="Demo Analytics Module",
                     system_type=SystemType.INTERNAL,
                     source=SystemSource.AUTO_EXTRACTED,
