@@ -4,7 +4,7 @@ import Modal from "./Modal";
 import SystemDetail from "./SystemDetail";
 import RequestApproval from "./RequestApproval";
 import ApplicationChatbot from './ApplicationChatbot';
-import ChatBubble from './ChatBubble'; // Import the general chat bubble
+import ChatBubble from './ChatBubble';
 import {
   PieChart,
   Pie,
@@ -39,7 +39,7 @@ function ViewerDashboard() {
   const [selectedSystem, setSelectedSystem] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [error, setError] = useState(null);
-  const [chatApplicationId, setChatApplicationId] = useState(null); // State for the application-specific chat
+  const [chatApplicationId, setChatApplicationId] = useState(null);
 
   const systemsPerPage = 8;
 
@@ -132,7 +132,6 @@ function ViewerDashboard() {
     setShowRequestModal(true);
   };
 
-  // This function now sets the application ID to open the specific chat
   const handleApplicationIdClick = (appId) => {
     setChatApplicationId(appId);
   };
@@ -157,6 +156,10 @@ function ViewerDashboard() {
       return getStatus(s) === filterStatus;
     })
     .filter((s) => {
+      if (!filterCriticality) return true;
+      return getCriticalityLevel(s) === filterCriticality;
+    })
+    .filter((s) => {
       if (!filterSystemType) return true;
       return s.system_type === filterSystemType.toLowerCase();
     });
@@ -169,6 +172,13 @@ function ViewerDashboard() {
   const statusChartData = [
     { name: "Approved", value: summary.approved, color: "#4CAF50" },
     { name: "Pending", value: summary.pending, color: "#F44336" }
+  ];
+
+  const criticalityChartData = [
+    { name: "Low", value: filteredSystems.filter(s => getCriticalityLevel(s) === "Low").length, color: "#A4C52E" },
+    { name: "Medium", value: filteredSystems.filter(s => getCriticalityLevel(s) === "Medium").length, color: "#FFEB3B" },
+    { name: "High", value: filteredSystems.filter(s => getCriticalityLevel(s) === "High").length, color: "#FF9800" },
+    { name: "Critical", value: filteredSystems.filter(s => getCriticalityLevel(s) === "Critical").length, color: "#F44336" }
   ];
 
   const systemTypeChartData = [
@@ -196,11 +206,31 @@ function ViewerDashboard() {
     );
   }
 
+  if (summary.systems === 0) {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h1>📊 Viewer Dashboard</h1>
+        </div>
+
+        <div className="no-applications-message">
+          <div className="empty-state">
+            <h2>No Systems Available Yet</h2>
+            <p>There are currently no systems registered in the application.</p>
+            <p>Please check back later or contact your administrator.</p>
+          </div>
+        </div>
+
+        {/* General chat bubble remains available */}
+        <ChatBubble token={user.token} />
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>📊 Viewer Dashboard</h1>
-        {/* The old chat toggle button is removed */}
       </div>
 
       {error && <div className="error-message">Error: {error}</div>}
@@ -247,6 +277,30 @@ function ViewerDashboard() {
           </div>
         </div>
 
+        {/* Added Criticality Chart */}
+        <div className="chart-wrapper">
+          <h3>System Criticality</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={criticalityChartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" name="Systems">
+                  {criticalityChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         <div className="chart-wrapper">
           <h3>System Type</h3>
           <div className="chart-container">
@@ -272,84 +326,79 @@ function ViewerDashboard() {
       </div>
 
       <div className="dashboard-filters">
-  <input
-    type="text"
-    placeholder="🔍 Search system"
-    value={searchTerm}
-    onChange={(e) => {
-      setSearchTerm(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="filter-input"
-  />
-  
-  <input
-    type="text"
-    placeholder="👤 Filter by approver"
-    value={filterApprover}
-    onChange={(e) => {
-      setFilterApprover(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="filter-input"
-  />
-  
-  <select 
-    value={monthRange} 
-    onChange={(e) => {
-      setMonthRange(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="filter-select"
-  >
-    <option value="">All Time</option>
-    <option value="3">Last 3 Months</option>
-    <option value="6">Last 6 Months</option>
-    <option value="12">Last 12 Months</option>
-  </select>
-  
-  <select 
-    value={filterStatus} 
-    onChange={(e) => {
-      setFilterStatus(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="filter-select"
-  >
-    <option value="">All Statuses</option>
-    <option value="Approved">Approved</option>
-    <option value="Pending">Pending</option>
-  </select>
-  
-  <select
-    value={filterCriticality}
-    onChange={(e) => {
-      setFilterCriticality(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="filter-select"
-  >
-    <option value="">All Criticalities</option>
-    <option value="Low">Low (1)</option>
-    <option value="Medium">Medium (2)</option>
-    <option value="High">High (3)</option>
-    <option value="Critical">Critical (4)</option>
-  </select>
-  
-  <select
-    value={filterSystemType}
-    onChange={(e) => {
-      setFilterSystemType(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="filter-select"
-  >
-    <option value="">All Types</option>
-    <option value="internal">Internal</option>
-    <option value="external">External</option>
-    <option value="unclassified">Unclassified</option>
-  </select>
-</div>
+        <input
+          type="text"
+          placeholder="🔍 Search system"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="filter-input"
+        />
+        <input
+          type="text"
+          placeholder="👤 Filter by approver"
+          value={filterApprover}
+          onChange={(e) => {
+            setFilterApprover(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="filter-input"
+        />
+        <select 
+          value={monthRange} 
+          onChange={(e) => {
+            setMonthRange(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="filter-select"
+        >
+          <option value="">All Time</option>
+          <option value="3">Last 3 Months</option>
+          <option value="6">Last 6 Months</option>
+          <option value="12">Last 12 Months</option>
+        </select>
+        <select 
+          value={filterStatus} 
+          onChange={(e) => {
+            setFilterStatus(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="filter-select"
+        >
+          <option value="">All Statuses</option>
+          <option value="Approved">Approved</option>
+          <option value="Pending">Pending</option>
+        </select>
+        <select
+          value={filterCriticality}
+          onChange={(e) => {
+            setFilterCriticality(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="filter-select"
+        >
+          <option value="">All Criticalities</option>
+          <option value="Low">Low (1)</option>
+          <option value="Medium">Medium (2)</option>
+          <option value="High">High (3)</option>
+          <option value="Critical">Critical (4)</option>
+        </select>
+        <select
+          value={filterSystemType}
+          onChange={(e) => {
+            setFilterSystemType(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="filter-select"
+        >
+          <option value="">All Types</option>
+          <option value="internal">Internal</option>
+          <option value="external">External</option>
+          <option value="unclassified">Unclassified</option>
+        </select>
+      </div>
 
       <div className="systems-table-container">
         <table className="systems-table">
@@ -388,7 +437,7 @@ function ViewerDashboard() {
                   <td>
                     {system.application_id ? (
                       <button 
-                        className="app-id-button" // Simplified class name
+                        className="app-id-button"
                         onClick={() => handleApplicationIdClick(system.application_id)}
                       >
                         {system.application_id}
@@ -419,49 +468,43 @@ function ViewerDashboard() {
           </tbody>
         </table>
         {filteredSystems.length > systemsPerPage && (
-  <div className="pagination-container">
-    <div className="pagination">
-      <button
-        onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-        disabled={currentPage === 1}
-        className="pagination-button"
-      >
-        &laquo; Previous
-      </button>
-      
-      {Array.from(
-        { length: Math.ceil(filteredSystems.length / systemsPerPage) },
-        (_, i) => (
-          <button
-            key={i + 1}
-            onClick={() => setCurrentPage(i + 1)}
-            className={`pagination-button ${currentPage === i + 1 ? 'active' : ''}`}
-          >
-            {i + 1}
-          </button>
-        )
-      ).slice(
-        Math.max(0, currentPage - 3),
-        Math.min(Math.ceil(filteredSystems.length / systemsPerPage), currentPage + 2)
-      )}
-      
-      <button
-        onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(filteredSystems.length / systemsPerPage)))}
-        disabled={currentPage === Math.ceil(filteredSystems.length / systemsPerPage)}
-        className="pagination-button"
-      >
-        Next &raquo;
-      </button>
-    </div>
-  </div>
-)}
+          <div className="pagination-container">
+            <div className="pagination">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                &laquo; Previous
+              </button>
+              
+              {Array.from(
+                { length: Math.ceil(filteredSystems.length / systemsPerPage) },
+                (_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`pagination-button ${currentPage === i + 1 ? 'active' : ''}`}
+                  >
+                    {i + 1}
+                  </button>
+                )
+              ).slice(
+                Math.max(0, currentPage - 3),
+                Math.min(Math.ceil(filteredSystems.length / systemsPerPage), currentPage + 2)
+              )}
+              
+              <button
+                onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(filteredSystems.length / systemsPerPage)))}
+                disabled={currentPage === Math.ceil(filteredSystems.length / systemsPerPage)}
+                className="pagination-button"
+              >
+                Next &raquo;
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {filteredSystems.length > systemsPerPage && (
-        <div className="pagination">
-          {/* ... pagination buttons ... */}
-        </div>
-      )}
 
       {selectedSystem && (
         <Modal
@@ -498,10 +541,8 @@ function ViewerDashboard() {
         </Modal>
       )}
 
-      {/* The general-purpose chat bubble is always rendered */}
       <ChatBubble token={user.token} />
 
-      {/* The application-specific chatbot is rendered only when an app ID is selected */}
       {chatApplicationId && (
         <ApplicationChatbot 
           token={user.token}

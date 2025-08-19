@@ -3,7 +3,6 @@ import { useAuth } from "./AuthContext";
 import Modal from "./Modal";
 import SystemDetail from "./SystemDetail";
 import RequestManagement from './RequestManagement';
-
 import {
   PieChart,
   Pie,
@@ -41,6 +40,12 @@ function Dashboard() {
   const [requestsError, setRequestsError] = useState(null);
   const [selectedSystem, setSelectedSystem] = useState(null);
   const [showCreateExternalModal, setShowCreateExternalModal] = useState(false);
+  const [showCreateAppModal, setShowCreateAppModal] = useState(false);
+  const [newApplication, setNewApplication] = useState({
+    name: "",
+    description: "",
+    owner_email: ""
+  });
   const [newExternalSystem, setNewExternalSystem] = useState({
     name: "",
     applicationId: "",
@@ -73,27 +78,27 @@ function Dashboard() {
   };
 
   const fetchApprovalRequests = async () => {
-  setRequestsLoading(true);
-  setRequestsError(null);
-  try {
-    const res = await fetch(
-      "http://localhost:8000/api/v1/requests/pending",
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    
-    if (!res.ok) {
-      throw new Error('Failed to fetch approval requests');
+    setRequestsLoading(true);
+    setRequestsError(null);
+    try {
+      const res = await fetch(
+        "http://localhost:8000/api/v1/requests/pending",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch approval requests');
+      }
+      
+      const data = await res.json();
+      setApprovalRequests(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setRequestsError(err.message);
+      setApprovalRequests([]);
+    } finally {
+      setRequestsLoading(false);
     }
-    
-    const data = await res.json();
-    setApprovalRequests(Array.isArray(data) ? data : []);
-  } catch (err) {
-    setRequestsError(err.message);
-    setApprovalRequests([]);
-  } finally {
-    setRequestsLoading(false);
-  }
-};
+  };
 
   const approveRequest = async (requestId) => {
     try {
@@ -119,35 +124,35 @@ function Dashboard() {
   };
 
   const fetchSummary = async () => {
-  try {
-    setIsLoading(true);
-    
-    const appsRes = await fetch(
-      isAdmin
-        ? "http://localhost:8000/api/v1/admin/applications"
-        : "http://localhost:8000/api/v1/validation/applications",
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const appsData = await appsRes.json();
+    try {
+      setIsLoading(true);
+      
+      const appsRes = await fetch(
+        isAdmin
+          ? "http://localhost:8000/api/v1/admin/applications"
+          : "http://localhost:8000/api/v1/validation/applications",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const appsData = await appsRes.json();
+      setApps(appsData);
 
-    const systemsList = await Promise.all(
-      appsData.map(async (app) => {
-        const res = await fetch(
-          `http://localhost:8000/api/v1/${
-            isAdmin ? "admin" : "validation"
-          }/applications/${app.id}/systems`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const systems = await res.json();
-        return systems.map(s => ({ 
-          ...s, 
-          // Ensure application_id is included
-          application_id: s.application_id || app.id
-        }));
-      })
-    );
+      const systemsList = await Promise.all(
+        appsData.map(async (app) => {
+          const res = await fetch(
+            `http://localhost:8000/api/v1/${
+              isAdmin ? "admin" : "validation"
+            }/applications/${app.id}/systems`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const systems = await res.json();
+          return systems.map(s => ({ 
+            ...s, 
+            application_id: s.application_id || app.id
+          }));
+        })
+      );
 
-    const allSystems = systemsList.flat();
+      const allSystems = systemsList.flat();
       const systemsWithStatus = await Promise.all(
         allSystems.map(async (system) => {
           const status = await fetchSystemStatus(system.id);
@@ -178,14 +183,7 @@ function Dashboard() {
         pending: pendingCount,
         dueForReapproval: dueForReapprovalCount
       });
-      // Add this to your Dashboard component
-{(user.role === 'admin' || user.role === 'checker') && (
-  <div className="request-management-section">
-    <h2>Approval Requests</h2>
-    <RequestManagement />
-  </div>
-)}
-      // Fetch approval requests for checkers/admins
+
       if (isAdmin || isChecker) {
         await fetchApprovalRequests();
       }
@@ -193,6 +191,49 @@ function Dashboard() {
       console.error("Dashboard error", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const createApplication = async () => {
+    try {
+      if (!newApplication.name.trim()) {
+        alert("Application name cannot be empty");
+        return;
+      }
+
+      if (!newApplication.owner_email.trim()) {
+        alert("Owner email cannot be empty");
+        return;
+      }
+
+      const response = await fetch(
+        "http://localhost:8000/api/v1/admin/applications",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newApplication),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to create application");
+      }
+
+      alert("Application created successfully!");
+      setShowCreateAppModal(false);
+      setNewApplication({
+        name: "",
+        description: "",
+        owner_email: ""
+      });
+      fetchSummary();
+    } catch (error) {
+      console.error("Error creating application:", error);
+      alert(`Error: ${error.message}`);
     }
   };
 
@@ -382,19 +423,123 @@ function Dashboard() {
     );
   }
 
+  if (summary.apps === 0) {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h1>📊 Home</h1>
+          {isAdmin && (
+            <>
+              <button 
+                className="create-app-btn"
+                onClick={() => setShowCreateAppModal(true)}
+              >
+                ➕ Create Application
+              </button>
+              <button 
+                className="create-external-btn"
+                onClick={() => setShowCreateExternalModal(true)}
+              >
+                ➕ Create External System
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="no-applications-message">
+          <div className="empty-state">
+            <h2>No Applications Created Yet</h2>
+            <p>It looks like no applications have been created in the system.</p>
+            {isAdmin && (
+              <button 
+                className="primary-action-btn"
+                onClick={() => setShowCreateAppModal(true)}
+              >
+                Create Your First Application
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showCreateAppModal && (
+          <Modal
+            title="Create New Application"
+            onClose={() => setShowCreateAppModal(false)}
+          >
+            <div className="create-app-form">
+              <div className="form-group">
+                <label>Application Name*</label>
+                <input
+                  type="text"
+                  value={newApplication.name}
+                  onChange={(e) => setNewApplication({...newApplication, name: e.target.value})}
+                  placeholder="Enter application name"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  value={newApplication.description}
+                  onChange={(e) => setNewApplication({...newApplication, description: e.target.value})}
+                  placeholder="Enter description"
+                  rows={3}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Owner Email*</label>
+                <input
+                  type="email"
+                  value={newApplication.owner_email}
+                  onChange={(e) => setNewApplication({...newApplication, owner_email: e.target.value})}
+                  placeholder="Enter owner's email"
+                  required
+                />
+              </div>
+
+              <div className="form-actions">
+                <button 
+                  className="btn-cancel"
+                  onClick={() => setShowCreateAppModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn-submit"
+                  onClick={createApplication}
+                >
+                  Create Application
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
   return (
-    
     <div className="dashboard-container">
       {/* Header Row */}
       <div className="dashboard-header">
         <h1>📊 Home</h1>
         {isAdmin && (
-          <button 
-            className="create-external-btn"
-            onClick={() => setShowCreateExternalModal(true)}
-          >
-            ➕ Create External System
-          </button>
+          <>
+            <button 
+              className="create-app-btn"
+              onClick={() => setShowCreateAppModal(true)}
+            >
+              ➕ Create Application
+            </button>
+            <button 
+              className="create-external-btn"
+              onClick={() => setShowCreateExternalModal(true)}
+            >
+              ➕ Create External System
+            </button>
+          </>
         )}
       </div>
 
@@ -596,7 +741,6 @@ function Dashboard() {
         <table className="systems-table">
           <thead>
             <tr>
-              
               <th>System</th>
               <th>Application ID</th>
               <th>Type</th>
@@ -608,49 +752,49 @@ function Dashboard() {
             </tr>
           </thead>
           <tbody>
-  {paginatedSystems.length === 0 ? (
-    <tr>
-      <td colSpan="8" className="no-systems-message"> {/* Update colSpan to 8 */}
-        No systems found matching your filters
-      </td>
-    </tr>
-  ) : (
-    paginatedSystems.map((system) => (
-      <tr key={system.id}>
-        <td>{system.name}</td>
-        <td>{system.application_id || "--"}</td> {/* New cell */}
-        <td>{getSystemTypeTag(system)}</td>
-        <td>
-          <span className={`status-badge ${getStatus(system).toLowerCase().replace(/\s+/g, '-')}`}>
-            {getStatus(system)}
-          </span>
-        </td>
-        <td>{getCriticalityTag(system)}</td>
-        <td>
-          {formatDateTime(system.approved_at)}
-        </td>
-        <td>{system.approved_by || "--"}</td>
-        <td className="actions-cell">
-          <button 
-            onClick={() => setSelectedSystem(system)}
-            className="edit-button"
-          >
-            ✏️ Edit
-          </button>
-          {needsRecertification(system) && (
-            <button 
-              className="notification-button"
-              title={`Recertification due! Approved over ${RECERTIFICATION_PERIOD_DAYS} days ago.`}
-              onClick={() => alert(`Recertification needed for ${system.name}`)}
-            >
-              🔔
-            </button>
-          )}
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
+            {paginatedSystems.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="no-systems-message">
+                  No systems found matching your filters
+                </td>
+              </tr>
+            ) : (
+              paginatedSystems.map((system) => (
+                <tr key={system.id}>
+                  <td>{system.name}</td>
+                  <td>{system.application_id || "--"}</td>
+                  <td>{getSystemTypeTag(system)}</td>
+                  <td>
+                    <span className={`status-badge ${getStatus(system).toLowerCase().replace(/\s+/g, '-')}`}>
+                      {getStatus(system)}
+                    </span>
+                  </td>
+                  <td>{getCriticalityTag(system)}</td>
+                  <td>
+                    {formatDateTime(system.approved_at)}
+                  </td>
+                  <td>{system.approved_by || "--"}</td>
+                  <td className="actions-cell">
+                    <button 
+                      onClick={() => setSelectedSystem(system)}
+                      className="edit-button"
+                    >
+                      ✏️ Edit
+                    </button>
+                    {needsRecertification(system) && (
+                      <button 
+                        className="notification-button"
+                        title={`Recertification due! Approved over ${RECERTIFICATION_PERIOD_DAYS} days ago.`}
+                        onClick={() => alert(`Recertification needed for ${system.name}`)}
+                      >
+                        🔔
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
         </table>
       </div>
 
@@ -705,6 +849,63 @@ function Dashboard() {
         </Modal>
       )}
 
+      {/* Create Application Modal */}
+      {showCreateAppModal && (
+        <Modal
+          title="Create New Application"
+          onClose={() => setShowCreateAppModal(false)}
+        >
+          <div className="create-app-form">
+            <div className="form-group">
+              <label>Application Name*</label>
+              <input
+                type="text"
+                value={newApplication.name}
+                onChange={(e) => setNewApplication({...newApplication, name: e.target.value})}
+                placeholder="Enter application name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                value={newApplication.description}
+                onChange={(e) => setNewApplication({...newApplication, description: e.target.value})}
+                placeholder="Enter description"
+                rows={3}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Owner Email*</label>
+              <input
+                type="email"
+                value={newApplication.owner_email}
+                onChange={(e) => setNewApplication({...newApplication, owner_email: e.target.value})}
+                placeholder="Enter owner's email"
+                required
+              />
+            </div>
+
+            <div className="form-actions">
+              <button 
+                className="btn-cancel"
+                onClick={() => setShowCreateAppModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-submit"
+                onClick={createApplication}
+              >
+                Create Application
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* Create External System Modal */}
       {showCreateExternalModal && (
         <Modal
@@ -713,25 +914,27 @@ function Dashboard() {
         >
           <div className="create-external-form">
             <div className="form-group">
-              <label>System Name</label>
+              <label>System Name*</label>
               <input
                 type="text"
                 value={newExternalSystem.name}
                 onChange={(e) => setNewExternalSystem({...newExternalSystem, name: e.target.value})}
                 placeholder="Enter system name"
+                required
               />
             </div>
 
             <div className="form-group">
-              <label>Application</label>
+              <label>Application*</label>
               <select
                 value={newExternalSystem.applicationId}
                 onChange={(e) => setNewExternalSystem({...newExternalSystem, applicationId: e.target.value})}
+                required
               >
                 <option value="">Select Application</option>
                 {apps.map(app => (
                   <option key={app.id} value={app.id}>
-                    App #{app.id} - {app.user_name}
+                    {app.name || `App #${app.id}`}
                   </option>
                 ))}
               </select>
@@ -777,7 +980,6 @@ function Dashboard() {
         </Modal>
       )}
     </div>
-    
   );
 }
 
