@@ -18,7 +18,7 @@ if uploaded_files:
     st.session_state.uploaded_files = uploaded_files
 
 # --- FastAPI Backend URL ---
-BACKEND_URL = "http://127.0.0.1:8000"  # replace with deployed endpoint if needed
+BACKEND_URL = "http://127.0.0.1:8001"  # replace with deployed endpoint if needed
 
 # --- Session State ---
 if "session_id" not in st.session_state:

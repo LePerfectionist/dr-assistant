@@ -19,7 +19,7 @@ const ChatBubble = ({ sessionId }) => {
     setInput(""); // Clear input immediately
 
     try {
-      const res = await axios.post("http://localhost:8000/chat", {
+      const res = await axios.post("http://localhost:8001/chat", {
         session_id: sessionId,
         question: messageToSend,
         include_dr_context: true,

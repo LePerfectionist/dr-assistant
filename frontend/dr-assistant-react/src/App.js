@@ -36,7 +36,7 @@ function App() {
     try {
       setIsUploading(true);
       setUploadStatus(null);
-      const res = await axios.post("http://localhost:8000/upload_runbooks", formData);
+      const res = await axios.post("http://localhost:8001/upload_runbooks", formData);
       const { session_id } = res.data;
       setSessionId(session_id);
       setUploadStatus("File embeddings created successfully ✅");
@@ -62,7 +62,7 @@ function App() {
         return acc;
       }, {});
 
-      const res = await axios.post("http://localhost:8000/generate-dr-steps", {
+      const res = await axios.post("http://localhost:8001/generate-dr-steps", {
         session_id: sessionId,
         system_choices,
       });

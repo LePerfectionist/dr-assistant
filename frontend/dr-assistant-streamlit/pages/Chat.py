@@ -6,7 +6,7 @@ st.image(logo_url, width=200)
 st.markdown("---")
 st.header("💬 Chat with Your Runbooks")
 
-BACKEND_URL = "http://127.0.0.1:8000"
+BACKEND_URL = "http://127.0.0.1:8001"
 
 # --- Input Form ---
 if "session_id" not in st.session_state:
