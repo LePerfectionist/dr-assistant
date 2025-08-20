@@ -1,11 +1,13 @@
 
 from pydantic import BaseModel, EmailStr
 from sqlmodel import SQLModel
-from typing import Dict, List, Optional
 from datetime import datetime
 from .models.update_requests import RequestStatus
 from enum import Enum
 from .models.update_requests import RequestStatus
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+from .models.system import SystemType
 
 class SystemType(str, Enum):
     INTERNAL = "internal"
@@ -138,3 +140,110 @@ class DRStepsRequest(BaseModel):
 class DRStepsResponse(BaseModel):
     dr_steps: str
     session_id: str
+
+
+
+# === CHANGE PROPOSAL SCHEMAS ===
+
+class SystemChangeProposalCreate(BaseModel):
+    """Schema for creating a system change proposal"""
+    system_id: int
+    reason: str
+    changes: Dict[str, Any]  # Dictionary of field_name -> new_value
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "system_id": 1,
+                "reason": "Need to update DR procedures",
+                "changes": {
+                    "name": "Updated System Name",
+                    "dr_data": "New DR procedures...",
+                    "upstream_dependencies": ["Service A", "Service B"],
+                    "key_contacts": ["user@example.com"]
+                }
+            }
+        }
+
+class SystemChangeComparison(BaseModel):
+    """Shows original vs proposed values for a field"""
+    field_name: str
+    original_value: Any
+    proposed_value: Any
+    has_changed: bool
+
+class SystemChangeProposalResponse(BaseModel):
+    """Response schema for change proposals"""
+    id: int
+    update_request_id: int
+    system_id: int
+    status: str
+    created_at: datetime
+    changed_fields: List[str]
+    
+    # The actual changes
+    changes: Dict[str, Any]
+    
+    # System info
+    system_name: str
+    
+    # Request info  
+    requested_by: str
+    reason: str
+    
+    class Config:
+        orm_mode = True
+
+class SystemChangeProposalReview(BaseModel):
+    """Detailed view for checker review"""
+    id: int
+    update_request_id: int
+    system_id: int
+    system_name: str
+    status: str
+    created_at: datetime
+    
+    # Who requested
+    requested_by_name: str
+    reason: str
+    
+    # Comparison data
+    comparisons: List[SystemChangeComparison]
+    
+    class Config:
+        orm_mode = True
+
+class ChangeProposalDecision(BaseModel):
+    """Schema for checker's decision on change proposal"""
+    action: str  # "approve" or "reject"
+    comment: Optional[str] = None
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "action": "approve",
+                "comment": "Changes look good, approved."
+            }
+        }
+
+# Update the existing UpdateRequestResponse to include change proposal info
+class EnhancedUpdateRequestResponse(BaseModel):
+    id: int
+    reason: str
+    status: str
+    request_type: str
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    comment: Optional[str] = None
+    resolved_by: Optional[int] = None
+    
+    # Convert these to use proper response models
+    system: Optional[SystemResponse] = None
+    requested_by_user: Optional[UserResponse] = None
+    resolved_by_user: Optional[UserResponse] = None
+    
+    # Include change proposal if it exists
+    change_proposal: Optional[SystemChangeProposalResponse] = None
+    
+    class Config:
+        orm_mode = True

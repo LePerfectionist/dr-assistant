@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import Modal from "./Modal";
 import SystemDetail from "./SystemDetail";
-import RequestManagement from './RequestManagement';
+import ChangeProposalReview from './ChangeProposalReview';
 import {
   PieChart,
   Pie,
@@ -57,6 +57,8 @@ function Dashboard() {
   });
   const [approvalRequests, setApprovalRequests] = useState([]);
   const [showRequests, setShowRequests] = useState(false);
+  const [showChangeProposals, setShowChangeProposals] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
   
   const systemsPerPage = 8;
   const isAdmin = user?.role === "admin";
@@ -423,102 +425,342 @@ function Dashboard() {
     );
   }
 
-  if (summary.apps === 0) {
+  // Navigation tabs for checker/admin
+  const renderNavigationTabs = () => {
+    if (!isAdmin && !isChecker) return null;
+    
     return (
-      <div className="dashboard-container">
-        <div className="dashboard-header">
-          <h1>📊 Home</h1>
-          {isAdmin && (
-            <>
-              <button 
-                className="create-app-btn"
-                onClick={() => setShowCreateAppModal(true)}
-              >
-                ➕ Create Application
-              </button>
-              <button 
-                className="create-external-btn"
-                onClick={() => setShowCreateExternalModal(true)}
-              >
-                ➕ Create External System
-              </button>
-            </>
+      <div className="dashboard-tabs">
+        <button 
+          className={`tab-button ${activeTab === "dashboard" ? "active" : ""}`}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard
+        </button>
+        <button 
+          className={`tab-button ${activeTab === "requests" ? "active" : ""}`}
+          onClick={() => setActiveTab("requests")}
+        >
+          Approval Requests ({approvalRequests.length})
+        </button>
+        <button 
+          className={`tab-button ${activeTab === "change-proposals" ? "active" : ""}`}
+          onClick={() => setActiveTab("change-proposals")}
+        >
+          Change Proposals
+        </button>
+      </div>
+    );
+  };
+
+  // Render content based on active tab
+  const renderTabContent = () => {
+    if (activeTab === "requests") {
+      return (
+        <div className="approval-requests-section">
+          <h2>Pending Approval Requests</h2>
+          {requestsLoading ? (
+            <div className="loading-spinner">Loading requests...</div>
+          ) : requestsError ? (
+            <div className="error-message">Error: {requestsError}</div>
+          ) : approvalRequests.length === 0 ? (
+            <p>No pending approval requests</p>
+          ) : (
+            <div className="requests-list">
+              {approvalRequests.map(request => (
+                <div key={request.id} className="request-card">
+                  <h4>System: {request.system?.name || "Unknown System"}</h4>
+                  <p>Requested by: {request.requested_by_user?.name || "Unknown User"}</p>
+                  <p>Requested at: {new Date(request.created_at).toLocaleString()}</p>
+                  <p>Type: {request.request_type}</p>
+                  
+                  {/* Display change proposal details if available */}
+                  {request.change_proposal && (
+                    <div className="change-details">
+                      <h5>Proposed Changes:</h5>
+                      <ul>
+                        {Object.entries(request.change_proposal.changes).map(([field, value]) => (
+                          <li key={field}>
+                            <strong>{field}:</strong> {Array.isArray(value) ? value.join(', ') : value}
+                          </li>
+                        ))}
+                      </ul>
+                      <p>Reason: {request.change_proposal.reason}</p>
+                    </div>
+                  )}
+                  
+                  <div className="request-actions">
+                    <button 
+                      className="approve-btn"
+                      onClick={() => approveRequest(request.id)}
+                    >
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-
-        <div className="no-applications-message">
-          <div className="empty-state">
-            <h2>No Applications Created Yet</h2>
-            <p>It looks like no applications have been created in the system.</p>
-            {isAdmin && (
-              <button 
-                className="primary-action-btn"
-                onClick={() => setShowCreateAppModal(true)}
-              >
-                Create Your First Application
-              </button>
-            )}
+      );
+    } else if (activeTab === "change-proposals") {
+      return <ChangeProposalReview token={token} />;
+    }
+    
+    // Default dashboard view
+    return (
+      <>
+        <div className="summary-cards">
+          <div className="card">
+            <span className="card-icon">🗂</span>
+            <span className="card-value">{summary.apps}</span>
+            <span className="card-label">Applications</span>
+          </div>
+          {isAdmin && (
+            <div className="card">
+              <span className="card-icon">👥</span>
+              <span className="card-value">{summary.users}</span>
+              <span className="card-label">Users</span>
+            </div>
+          )}
+          <div className="card">
+            <span className="card-icon">📌</span>
+            <span className="card-value">{summary.pending}</span>
+            <span className="card-label">Pending</span>
+          </div>
+          <div className="card">
+            <span className="card-icon">⚠️</span>
+            <span className="card-value">{summary.dueForReapproval}</span>
+            <span className="card-label">Due for Reapproval</span>
           </div>
         </div>
 
-        {showCreateAppModal && (
-          <Modal
-            title="Create New Application"
-            onClose={() => setShowCreateAppModal(false)}
-          >
-            <div className="create-app-form">
-              <div className="form-group">
-                <label>Application Name*</label>
-                <input
-                  type="text"
-                  value={newApplication.name}
-                  onChange={(e) => setNewApplication({...newApplication, name: e.target.value})}
-                  placeholder="Enter application name"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={newApplication.description}
-                  onChange={(e) => setNewApplication({...newApplication, description: e.target.value})}
-                  placeholder="Enter description"
-                  rows={3}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Owner Email*</label>
-                <input
-                  type="email"
-                  value={newApplication.owner_email}
-                  onChange={(e) => setNewApplication({...newApplication, owner_email: e.target.value})}
-                  placeholder="Enter owner's email"
-                  required
-                />
-              </div>
-
-              <div className="form-actions">
-                <button 
-                  className="btn-cancel"
-                  onClick={() => setShowCreateAppModal(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="btn-submit"
-                  onClick={createApplication}
-                >
-                  Create Application
-                </button>
-              </div>
+        <div className="chart-row">
+          {/* Status Pie Chart */}
+          <div className="chart-wrapper">
+            <h3>System Status</h3>
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={80}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {statusChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [`${value} systems`, name]} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          </Modal>
+          </div>
+
+          {/* Criticality Bar Chart */}
+          <div className="chart-wrapper">
+            <h3>System Criticality</h3>
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={criticalityChartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value" name="Systems">
+                    {criticalityChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* System Type Pie Chart */}
+          <div className="chart-wrapper">
+            <h3>System Type</h3>
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={systemTypeChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={80}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {systemTypeChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        <div className="dashboard-filters">
+          <input
+            type="text"
+            placeholder="🔍 Search system"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="filter-input"
+          />
+          <input
+            type="text"
+            placeholder="👤 Filter by approver"
+            value={filterApprover}
+            onChange={(e) => setFilterApprover(e.target.value)}
+            className="filter-input"
+          />
+          <select 
+            value={monthRange} 
+            onChange={(e) => setMonthRange(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Time</option>
+            <option value="3">Last 3 Months</option>
+            <option value="6">Last 6 Months</option>
+            <option value="12">Last 12 Months</option>
+          </select>
+          <select 
+            value={filterStatus} 
+            onChange={handleStatusFilterChange}
+            className="filter-select"
+          >
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Due for Reapproval">Due for Reapproval</option>
+          </select>
+          <select
+            value={filterCriticality}
+            onChange={(e) => setFilterCriticality(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Criticalities</option>
+            <option value="Low">Low (1)</option>
+            <option value="Medium">Medium (2)</option>
+            <option value="High">High (3)</option>
+            <option value="Critical">Critical (4)</option>
+          </select>
+          <select
+            value={filterSystemType}
+            onChange={(e) => setFilterSystemType(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Types</option>
+            <option value="internal">Internal</option>
+            <option value="external">External</option>
+            <option value="unclassified">Unclassified</option>
+          </select>
+        </div>
+
+        <div className="systems-table-container">
+          <table className="systems-table">
+            <thead>
+              <tr>
+                <th>System</th>
+                <th>Application ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Criticality</th>
+                <th>Last Approved</th>
+                <th>Approved By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedSystems.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="no-systems-message">
+                    No systems found matching your filters
+                  </td>
+                </tr>
+              ) : (
+                paginatedSystems.map((system) => (
+                  <tr key={system.id}>
+                    <td>{system.name}</td>
+                    <td>{system.application_id || "--"}</td>
+                    <td>{getSystemTypeTag(system)}</td>
+                    <td>
+                      <span className={`status-badge ${getStatus(system).toLowerCase().replace(/\s+/g, '-')}`}>
+                        {getStatus(system)}
+                      </span>
+                    </td>
+                    <td>{getCriticalityTag(system)}</td>
+                    <td>
+                      {formatDateTime(system.approved_at)}
+                    </td>
+                    <td>{system.approved_by || "--"}</td>
+                    <td className="actions-cell">
+                      <button 
+                        onClick={() => setSelectedSystem(system)}
+                        className="edit-button"
+                      >
+                        ✏️ Edit
+                      </button>
+                      {needsRecertification(system) && (
+                        <button 
+                          className="notification-button"
+                          title={`Recertification due! Approved over ${RECERTIFICATION_PERIOD_DAYS} days ago.`}
+                          onClick={() => alert(`Recertification needed for ${system.name}`)}
+                        >
+                          🔔
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredSystems.length > systemsPerPage && (
+          <div className="pagination">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            
+            {Array.from(
+              { length: Math.ceil(filteredSystems.length / systemsPerPage) },
+              (_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={currentPage === i + 1 ? "active-page" : ""}
+                >
+                  {i + 1}
+                </button>
+              )
+            )}
+            
+            <button
+              onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(filteredSystems.length / systemsPerPage)))}
+              disabled={currentPage === Math.ceil(filteredSystems.length / systemsPerPage)}
+            >
+              Next
+            </button>
+          </div>
         )}
-      </div>
+      </>
     );
-  }
+  };
 
   return (
     <div className="dashboard-container">
@@ -543,291 +785,11 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Approval Requests Section for Checkers/Admins */}
-      {(isAdmin || isChecker) && (
-        <div className="approval-requests-section">
-          <button 
-            className="toggle-requests-btn"
-            onClick={() => setShowRequests(!showRequests)}
-          >
-            {showRequests ? "Hide" : "Show"} Pending Approval Requests ({approvalRequests.length})
-          </button>
+      {/* Navigation Tabs for Checker/Admin */}
+      {renderNavigationTabs()}
 
-          {showRequests && (
-            <div className="requests-list">
-              {approvalRequests.length === 0 ? (
-                <p>No pending approval requests</p>
-              ) : (
-                approvalRequests.map(request => (
-                  <div key={request.id} className="request-card">
-                    <h4>System: {request.system.name}</h4>
-                    <p>Requested by: {request.requested_by_user.name}</p>
-                    <p>Requested at: {new Date(request.created_at).toLocaleString()}</p>
-                    
-                    <div className="request-actions">
-                      <button 
-                        className="approve-btn"
-                        onClick={() => approveRequest(request.id)}
-                      >
-                        Approve
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="summary-cards">
-        <div className="card">
-          <span className="card-icon">🗂</span>
-          <span className="card-value">{summary.apps}</span>
-          <span className="card-label">Applications</span>
-        </div>
-        {isAdmin && (
-          <div className="card">
-            <span className="card-icon">👥</span>
-            <span className="card-value">{summary.users}</span>
-            <span className="card-label">Users</span>
-          </div>
-        )}
-        <div className="card">
-          <span className="card-icon">📌</span>
-          <span className="card-value">{summary.pending}</span>
-          <span className="card-label">Pending</span>
-        </div>
-        <div className="card">
-          <span className="card-icon">⚠️</span>
-          <span className="card-value">{summary.dueForReapproval}</span>
-          <span className="card-label">Due for Reapproval</span>
-        </div>
-      </div>
-
-      <div className="chart-row">
-        {/* Status Pie Chart */}
-        <div className="chart-wrapper">
-          <h3>System Status</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={statusChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={80}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {statusChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value, name) => [`${value} systems`, name]} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Criticality Bar Chart */}
-        <div className="chart-wrapper">
-          <h3>System Criticality</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={criticalityChartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" name="Systems">
-                  {criticalityChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* System Type Pie Chart */}
-        <div className="chart-wrapper">
-          <h3>System Type</h3>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={systemTypeChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={80}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {systemTypeChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      <div className="dashboard-filters">
-        <input
-          type="text"
-          placeholder="🔍 Search system"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="filter-input"
-        />
-        <input
-          type="text"
-          placeholder="👤 Filter by approver"
-          value={filterApprover}
-          onChange={(e) => setFilterApprover(e.target.value)}
-          className="filter-input"
-        />
-        <select 
-          value={monthRange} 
-          onChange={(e) => setMonthRange(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">All Time</option>
-          <option value="3">Last 3 Months</option>
-          <option value="6">Last 6 Months</option>
-          <option value="12">Last 12 Months</option>
-        </select>
-        <select 
-          value={filterStatus} 
-          onChange={handleStatusFilterChange}
-          className="filter-select"
-        >
-          <option value="">All Statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="Approved">Approved</option>
-          <option value="Due for Reapproval">Due for Reapproval</option>
-        </select>
-        <select
-          value={filterCriticality}
-          onChange={(e) => setFilterCriticality(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">All Criticalities</option>
-          <option value="Low">Low (1)</option>
-          <option value="Medium">Medium (2)</option>
-          <option value="High">High (3)</option>
-          <option value="Critical">Critical (4)</option>
-        </select>
-        <select
-          value={filterSystemType}
-          onChange={(e) => setFilterSystemType(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">All Types</option>
-          <option value="internal">Internal</option>
-          <option value="external">External</option>
-          <option value="unclassified">Unclassified</option>
-        </select>
-      </div>
-
-      <div className="systems-table-container">
-        <table className="systems-table">
-          <thead>
-            <tr>
-              <th>System</th>
-              <th>Application ID</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Criticality</th>
-              <th>Last Approved</th>
-              <th>Approved By</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedSystems.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="no-systems-message">
-                  No systems found matching your filters
-                </td>
-              </tr>
-            ) : (
-              paginatedSystems.map((system) => (
-                <tr key={system.id}>
-                  <td>{system.name}</td>
-                  <td>{system.application_id || "--"}</td>
-                  <td>{getSystemTypeTag(system)}</td>
-                  <td>
-                    <span className={`status-badge ${getStatus(system).toLowerCase().replace(/\s+/g, '-')}`}>
-                      {getStatus(system)}
-                    </span>
-                  </td>
-                  <td>{getCriticalityTag(system)}</td>
-                  <td>
-                    {formatDateTime(system.approved_at)}
-                  </td>
-                  <td>{system.approved_by || "--"}</td>
-                  <td className="actions-cell">
-                    <button 
-                      onClick={() => setSelectedSystem(system)}
-                      className="edit-button"
-                    >
-                      ✏️ Edit
-                    </button>
-                    {needsRecertification(system) && (
-                      <button 
-                        className="notification-button"
-                        title={`Recertification due! Approved over ${RECERTIFICATION_PERIOD_DAYS} days ago.`}
-                        onClick={() => alert(`Recertification needed for ${system.name}`)}
-                      >
-                        🔔
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {filteredSystems.length > systemsPerPage && (
-        <div className="pagination">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          
-          {Array.from(
-            { length: Math.ceil(filteredSystems.length / systemsPerPage) },
-            (_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                className={currentPage === i + 1 ? "active-page" : ""}
-              >
-                {i + 1}
-              </button>
-            )
-          )}
-          
-          <button
-            onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(filteredSystems.length / systemsPerPage)))}
-            disabled={currentPage === Math.ceil(filteredSystems.length / systemsPerPage)}
-          >
-            Next
-          </button>
-        </div>
-      )}
+      {/* Main Content */}
+      {renderTabContent()}
 
       {selectedSystem && (
         <Modal

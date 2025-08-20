@@ -567,3 +567,107 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+/* Dashboard Tabs */
+.dashboard-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.tab-button.active {
+  color: #2196F3;
+  border-bottom-color: #2196F3;
+  background-color: #f0f8ff;
+}
+
+/* Approval Requests */
+.approval-requests-section {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.request-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  border-left: 4px solid #ffc107;
+}
+
+.request-card h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.request-card p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.change-details {
+  background: white;
+  border-radius: 6px;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #e0e0e0;
+}
+
+.change-details h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.change-details ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.change-details li {
+  margin-bottom: 5px;
+}
+
+.request-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.approve-btn {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.approve-btn:hover {
+  background: #218838;
+}

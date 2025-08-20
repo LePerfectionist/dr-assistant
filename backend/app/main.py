@@ -6,6 +6,8 @@ from .database import init_db
 from app.routers import requests 
 load_dotenv()
 import logging
+from app.routers import change_proposals
+
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +35,7 @@ app.add_middleware(
 
 app.include_router(api_router)
 app.include_router(requests.router, prefix="/api/v1")
+app.include_router(change_proposals.router, prefix="/api/v1")
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the GenAI DR Utility API"}

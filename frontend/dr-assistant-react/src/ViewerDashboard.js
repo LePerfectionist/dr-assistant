@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import Modal from "./Modal";
 import SystemDetail from "./SystemDetail";
+import SystemEditModal from "./SystemEditModal";
 import RequestApproval from "./RequestApproval";
 import ApplicationChatbot from './ApplicationChatbot';
 import ChatBubble from './ChatBubble';
@@ -38,6 +39,8 @@ function ViewerDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSystem, setSelectedSystem] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState(null);
   const [chatApplicationId, setChatApplicationId] = useState(null);
 
@@ -49,7 +52,7 @@ function ViewerDashboard() {
       setError(null);
       
       const response = await fetch(
-        `http://localhost:8000/api/v1/requests/viewer/systems?page=${currentPage}&search=${searchTerm}`,
+        `http://localhost:8000/api/v1/requests/viewer/systems`,
         {
           headers: {
             'Authorization': `Bearer ${user.token}`,
@@ -63,8 +66,8 @@ function ViewerDashboard() {
 
       const data = await response.json();
       
-      const items = Array.isArray(data) ? data : data.items || [];
-      const totalSystems = data.total_count || items.length;
+      const items = Array.isArray(data) ? data : [];
+      const totalSystems = items.length;
       
       const pendingCount = items.filter(s => !s.is_approved).length;
       
@@ -127,6 +130,11 @@ function ViewerDashboard() {
     );
   };
 
+  const handleEditClick = (system) => {
+    setSelectedSystem(system);
+    setShowEditModal(true);
+  };
+
   const handleRequestClick = (system) => {
     setSelectedSystem(system);
     setShowRequestModal(true);
@@ -134,6 +142,66 @@ function ViewerDashboard() {
 
   const handleApplicationIdClick = (appId) => {
     setChatApplicationId(appId);
+  };
+
+  const handleEditSubmit = async (data) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/change-proposals/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          system_id: selectedSystem.id,
+          reason: data.reason,
+          changes: data.changes
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to submit changes');
+      }
+
+      const result = await response.json();
+      setSuccessMessage(`Change proposal submitted for ${selectedSystem.name}! Changes: ${Object.keys(data.changes).join(', ')}`);
+      setShowEditModal(false);
+      setSelectedSystem(null);
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const handleRequestSubmit = async (reason) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/requests/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          system_id: selectedSystem.id,
+          reason: reason,
+          request_type: selectedSystem.is_approved ? "change" : "approval"
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to submit request');
+      }
+
+      setSuccessMessage(`${selectedSystem.is_approved ? 'Change' : 'Approval'} request submitted for ${selectedSystem.name}!`);
+      setShowRequestModal(false);
+      setSelectedSystem(null);
+      setTimeout(() => setSuccessMessage(""), 5000);
+      fetchSystems(); // Refresh the data
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   const filteredSystems = systems
@@ -198,6 +266,252 @@ function ViewerDashboard() {
     return date.toLocaleString();
   };
 
+  // System Edit Modal Component
+  const SystemEditModal = ({ system, onClose, onSubmit }) => {
+    const [formData, setFormData] = useState({
+      name: system.name || '',
+      dr_data: system.dr_data || '',
+      upstream_dependencies: system.upstream_dependencies?.join(', ') || '',
+      downstream_dependencies: system.downstream_dependencies?.join(', ') || '',
+      key_contacts: system.key_contacts?.join(', ') || '',
+      system_type: system.system_type || 'internal',
+    });
+    
+    const [reason, setReason] = useState('');
+    const [changedFields, setChangedFields] = useState(new Set());
+
+    const handleFieldChange = (fieldName, value) => {
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: value
+      }));
+
+      const originalValue = getOriginalValue(fieldName);
+      const newChangedFields = new Set(changedFields);
+      
+      if (value !== originalValue) {
+        newChangedFields.add(fieldName);
+      } else {
+        newChangedFields.delete(fieldName);
+      }
+      
+      setChangedFields(newChangedFields);
+    };
+
+    const getOriginalValue = (fieldName) => {
+      switch (fieldName) {
+        case 'name': return system.name || '';
+        case 'dr_data': return system.dr_data || '';
+        case 'upstream_dependencies': return system.upstream_dependencies?.join(', ') || '';
+        case 'downstream_dependencies': return system.downstream_dependencies?.join(', ') || '';
+        case 'key_contacts': return system.key_contacts?.join(', ') || '';
+        case 'system_type': return system.system_type || 'internal';
+        default: return '';
+      }
+    };
+
+    const handleSubmit = () => {
+      if (changedFields.size === 0) {
+        alert('No changes detected. Please modify at least one field.');
+        return;
+      }
+      
+      if (!reason.trim()) {
+        alert('Please provide a reason for these changes.');
+        return;
+      }
+
+      const changes = {};
+      changedFields.forEach(fieldName => {
+        let value = formData[fieldName];
+        if (['upstream_dependencies', 'downstream_dependencies', 'key_contacts'].includes(fieldName)) {
+          value = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+        }
+        changes[fieldName] = value;
+      });
+
+      onSubmit({ changes, reason });
+    };
+
+    return (
+      <Modal
+        title={`Propose Changes for ${system.name}`}
+        onClose={onClose}
+        width="600px"
+      >
+        <div style={{ marginBottom: '20px' }}>
+          <strong>Changed Fields: </strong>
+          {changedFields.size > 0 ? Array.from(changedFields).join(', ') : 'None'}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              System Name:
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: changedFields.has('name') ? '2px solid #28a745' : '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: changedFields.has('name') ? '#f8fff9' : 'white'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              System Type:
+            </label>
+            <select
+              value={formData.system_type}
+              onChange={(e) => handleFieldChange('system_type', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: changedFields.has('system_type') ? '2px solid #28a745' : '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: changedFields.has('system_type') ? '#f8fff9' : 'white'
+              }}
+            >
+              <option value="internal">Internal</option>
+              <option value="external">External</option>
+              <option value="unclassified">Unclassified</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              DR Data:
+            </label>
+            <textarea
+              value={formData.dr_data}
+              onChange={(e) => handleFieldChange('dr_data', e.target.value)}
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: changedFields.has('dr_data') ? '2px solid #28a745' : '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: changedFields.has('dr_data') ? '#f8fff9' : 'white',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              Upstream Dependencies (comma-separated):
+            </label>
+            <input
+              type="text"
+              value={formData.upstream_dependencies}
+              onChange={(e) => handleFieldChange('upstream_dependencies', e.target.value)}
+              placeholder="Service A, Service B"
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: changedFields.has('upstream_dependencies') ? '2px solid #28a745' : '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: changedFields.has('upstream_dependencies') ? '#f8fff9' : 'white'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              Downstream Dependencies (comma-separated):
+            </label>
+            <input
+              type="text"
+              value={formData.downstream_dependencies}
+              onChange={(e) => handleFieldChange('downstream_dependencies', e.target.value)}
+              placeholder="Service X, Service Y"
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: changedFields.has('downstream_dependencies') ? '2px solid #28a745' : '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: changedFields.has('downstream_dependencies') ? '#f8fff9' : 'white'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              Key Contacts (comma-separated):
+            </label>
+            <input
+              type="text"
+              value={formData.key_contacts}
+              onChange={(e) => handleFieldChange('key_contacts', e.target.value)}
+              placeholder="user1@example.com, user2@example.com"
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: changedFields.has('key_contacts') ? '2px solid #28a745' : '1px solid #ccc',
+                borderRadius: '4px',
+                backgroundColor: changedFields.has('key_contacts') ? '#f8fff9' : 'white'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              Reason for Changes:
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              placeholder="Please explain why these changes are needed..."
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '10px 20px',
+                border: '1px solid #ccc',
+                background: 'white',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={changedFields.size === 0}
+              style={{
+                padding: '10px 20px',
+                border: 'none',
+                background: changedFields.size === 0 ? '#ccc' : '#28a745',
+                color: 'white',
+                borderRadius: '4px',
+                cursor: changedFields.size === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Submit Changes ({changedFields.size} field{changedFields.size !== 1 ? 's' : ''})
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="dashboard-container">
@@ -234,6 +548,18 @@ function ViewerDashboard() {
       </div>
 
       {error && <div className="error-message">Error: {error}</div>}
+      
+      {successMessage && (
+        <div style={{ 
+          background: '#d4edda', 
+          color: '#155724', 
+          padding: '10px', 
+          borderRadius: '4px', 
+          marginBottom: '20px' 
+        }}>
+          {successMessage}
+        </div>
+      )}
 
       <div className="summary-cards">
         <div className="card">
@@ -456,6 +782,12 @@ function ViewerDashboard() {
                       👁️ View
                     </button>
                     <button
+                      onClick={() => handleEditClick(system)}
+                      className="edit-button"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
                       onClick={() => handleRequestClick(system)}
                       className={`request-button ${system.is_approved ? 'changes' : 'approval'}`}
                     >
@@ -518,6 +850,17 @@ function ViewerDashboard() {
             onClose={() => setSelectedSystem(null)}
           />
         </Modal>
+      )}
+
+      {showEditModal && selectedSystem && (
+        <SystemEditModal
+          system={selectedSystem}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedSystem(null);
+          }}
+          onSubmit={handleEditSubmit}
+        />
       )}
 
       {showRequestModal && selectedSystem && (
