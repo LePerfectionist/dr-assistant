@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import Modal from "./Modal";
 import SystemDetail from "./SystemDetail";
+import ApplicationChatbot from './ApplicationChatbot';
+import ChatBubble from './ChatBubble';
 import {
   PieChart,
   Pie,
@@ -46,6 +48,7 @@ function ViewerDashboard() {
     system_type: "internal",
     reason: ""
   });
+  const [chatApplicationId, setChatApplicationId] = useState(null);
 
   const systemsPerPage = 8;
 
@@ -239,6 +242,10 @@ function ViewerDashboard() {
     }
   };
 
+  const handleApplicationIdClick = (appId) => {
+    setChatApplicationId(appId);
+  };
+
   const filteredSystems = systems
     .filter((s) => s.name?.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter((s) =>
@@ -323,6 +330,9 @@ function ViewerDashboard() {
             <p>Please check back later or contact your administrator.</p>
           </div>
         </div>
+
+        {/* General chat bubble remains available */}
+        <ChatBubble token={user.token} />
       </div>
     );
   }
@@ -545,7 +555,18 @@ function ViewerDashboard() {
                     </span>
                   </td>
                   <td>{getCriticalityTag(system)}</td>
-                  <td>{system.application_id || "--"}</td>
+                  <td>
+                    {system.application_id ? (
+                      <button 
+                        className="app-id-button"
+                        onClick={() => handleApplicationIdClick(system.application_id)}
+                      >
+                        {system.application_id}
+                      </button>
+                    ) : (
+                      '--'
+                    )}
+                  </td>
                   <td>{formatDateTime(system.approved_at)}</td>
                   <td>{system.approved_by || "--"}</td>
                   <td className="actions-cell">
@@ -726,6 +747,17 @@ function ViewerDashboard() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Add Chatbot Components */}
+      <ChatBubble token={user.token} />
+
+      {chatApplicationId && (
+        <ApplicationChatbot 
+          token={user.token}
+          onClose={() => setChatApplicationId(null)}
+          applicationId={chatApplicationId}
+        />
       )}
     </div>
   );
