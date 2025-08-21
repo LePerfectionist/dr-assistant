@@ -79,28 +79,6 @@ function Dashboard() {
     }
   };
 
-  const fetchApprovalRequests = async () => {
-    setRequestsLoading(true);
-    setRequestsError(null);
-    try {
-      const res = await fetch(
-        "http://localhost:8000/api/v1/requests/pending",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      if (!res.ok) {
-        throw new Error('Failed to fetch approval requests');
-      }
-      
-      const data = await res.json();
-      setApprovalRequests(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setRequestsError(err.message);
-      setApprovalRequests([]);
-    } finally {
-      setRequestsLoading(false);
-    }
-  };
 
   const approveRequest = async (requestId) => {
     try {
@@ -114,7 +92,6 @@ function Dashboard() {
       
       if (res.ok) {
         alert("Request approved successfully!");
-        fetchApprovalRequests();
         fetchSummary();
       } else {
         throw new Error("Approval failed");
@@ -186,9 +163,6 @@ function Dashboard() {
         dueForReapproval: dueForReapprovalCount
       });
 
-      if (isAdmin || isChecker) {
-        await fetchApprovalRequests();
-      }
     } catch (err) {
       console.error("Dashboard error", err);
     } finally {
@@ -436,12 +410,6 @@ function Dashboard() {
           onClick={() => setActiveTab("dashboard")}
         >
           Dashboard
-        </button>
-        <button 
-          className={`tab-button ${activeTab === "requests" ? "active" : ""}`}
-          onClick={() => setActiveTab("requests")}
-        >
-          Approval Requests ({approvalRequests.length})
         </button>
         <button 
           className={`tab-button ${activeTab === "change-proposals" ? "active" : ""}`}

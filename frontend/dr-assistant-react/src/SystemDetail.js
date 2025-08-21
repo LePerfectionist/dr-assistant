@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import DependencyInput from './DependencyInput';
 import "./SystemDetail.css";
-import RequestApproval from './RequestApproval';
 
-
-function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
+function SystemDetail({ system, user, onApprove, onUpdate, allSystems, isViewer = false, onClose }) {
   const [editMode, setEditMode] = useState(false);
   const [editedData, setEditedData] = useState({
     dr_data: "",
@@ -166,11 +164,11 @@ function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
         <h2 className="system-name">{system.name}</h2>
         <div className="system-meta">
           <div className="meta-item">
-    <span className="meta-label">Application ID:</span>
-    <span className="meta-value">
-      {system.application_id}
-    </span>
-  </div>
+            <span className="meta-label">Application ID:</span>
+            <span className="meta-value">
+              {system.application_id}
+            </span>
+          </div>
           {showSourceBadge && (
             <span className={`source-badge ${system.source}`}>
               {system.source === "manually_created" ? "Manual" : "Auto"}
@@ -186,19 +184,6 @@ function SystemDetail({ system, user, onApprove, onUpdate, allSystems }) {
           )}
         </div>
       </div>
-
-      {user?.role === "viewer" && !system.is_approved && (
-  <div className="viewer-actions">
-    <RequestApproval 
-      system={system} 
-      user={user}
-      onRequestSubmit={() => {
-        // Optional: refresh data or show confirmation
-        alert('Your request has been submitted for approval');
-      }}
-    />
-  </div>
-)}
 
       {editMode ? (
         <div className="edit-form">
