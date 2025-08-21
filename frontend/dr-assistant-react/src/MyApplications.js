@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import DependencyInput from './DependencyInput';
 import './MyApplications.css';
 
-function MyApplications({ setView }) {
+function MyApplications() {
   const { user, token } = useAuth();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [expandedAppId, setExpandedAppId] = useState(null);
   const [systemsMap, setSystemsMap] = useState({});
@@ -278,6 +280,14 @@ function MyApplications({ setView }) {
     }
   };
 
+  const handleViewGraph = () => {
+    if (!expandedAppId) {
+      alert("Please select an application first");
+      return;
+    }
+    navigate('/analysis', { state: { appId: expandedAppId } });
+  };
+
   useEffect(() => {
     fetchApplications();
   }, [user, token]);
@@ -311,7 +321,7 @@ function MyApplications({ setView }) {
           {applications.length === 0 ? (
             <div className="empty-state">
               <p>No applications found</p>
-              <button onClick={() => setView('upload')}>
+              <button onClick={() => navigate('/new-application')}>
                 Upload New Application
               </button>
             </div>
@@ -357,7 +367,7 @@ function MyApplications({ setView }) {
                 <div className="system-actions">
                   <button
                     className="view-graph-button"
-                    onClick={() => setView('analysis', expandedAppId)}
+                    onClick={handleViewGraph}
                   >
                     View Dependency Graph 📈
                   </button>

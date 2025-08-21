@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from './apiClient'; // Import our authenticated API client
 import './AnalysisPage.css'; 
 import GraphChat from './GraphChat';
 
-function AnalysisPage({ applicationId, setView }) {
+function AnalysisPage() {
   const [graphHtml, setGraphHtml] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get applicationId from location state
+  const applicationId = location.state?.appId;
 
   useEffect(() => {
     if (!applicationId) {
       setError('No application selected.');
       setIsLoading(false);
+      navigate('/my-applications');
       return;
     }
 
@@ -32,13 +39,13 @@ function AnalysisPage({ applicationId, setView }) {
     };
 
     fetchGraph();
-  }, [applicationId]); // Re-run this effect if the applicationId changes
+  }, [applicationId, navigate]); // Re-run this effect if the applicationId changes
 
   return (
     <div className="analysis-container">
       <div className="analysis-header">
         <h2>Dependency Graph for Application #{applicationId}</h2>
-        <button onClick={() => setView('myapps')}>← Back to My Applications</button>
+        <button onClick={() => navigate('/my-applications')}>← Back to My Applications</button>
       </div>
       
       <div className="graph-wrapper">

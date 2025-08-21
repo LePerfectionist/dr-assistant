@@ -83,11 +83,14 @@ function AppContent() {
           </ProtectedRoute>
         } />
         
-        <Route path="/analysis/:appId" element={
-          <ProtectedRoute allowedRoles={['admin', 'checker']}>
-            <AnalysisPage />
-          </ProtectedRoute>
-        } />
+        <Route 
+  path="/analysis" 
+  element={
+    <ProtectedRoute allowedRoles={['admin', 'checker']}>
+      <AnalysisPage />
+    </ProtectedRoute>
+  } 
+/>
 
         {/* Viewer Route */}
         <Route path="/viewer-dashboard" element={
